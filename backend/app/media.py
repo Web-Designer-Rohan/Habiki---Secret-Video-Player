@@ -9,6 +9,9 @@ from .core import Settings
 from .scanner import LibraryScanner
 
 
+MEDIA_TYPES = {".mp4": "video/mp4", ".vtt": "text/vtt"}
+
+
 class MediaService:
     def __init__(self, settings: Settings, scanner: LibraryScanner):
         self.settings = settings
@@ -49,8 +52,15 @@ class MediaService:
         public_data["anime"] = public_anime
         return public_data
 
-    def validated_path(self, path: str) -> Path:
+    def validated_path(self, path: str, allowed_extensions: set[str] | None = None) -> Path:
         candidate = Path(path).expanduser().resolve()
         if not any(candidate == root or root in candidate.parents for root in self.settings.library_roots()):
             raise HTTPException(status_code=404, detail="Media file is outside the configured library paths")
+        extensions = allowed_extensions or set(MEDIA_TYPES)
+        if candidate.suffix.lower() not in extensions:
+            raise HTTPException(status_code=404, detail="Unsupported media format")
         return candidate
+
+    def media_type(self, path: str) -> str:
+        candidate = self.validated_path(path)
+        return MEDIA_TYPES[candidate.suffix.lower()]

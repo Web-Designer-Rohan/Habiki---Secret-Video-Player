@@ -4,7 +4,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -45,6 +45,13 @@ app.include_router(router)
 async def hibiki_error(_: Request, error: HibikiError):
     status_code = 403 if error.__class__.__name__ == "AuthorizationError" else 401
     return JSONResponse(status_code=status_code, content={"success": False, "error": {"code": error.__class__.__name__.upper(), "message": str(error)}})
+
+
+@app.exception_handler(HTTPException)
+async def http_error(_: Request, error: HTTPException):
+    detail = error.detail if isinstance(error.detail, str) else "Request failed"
+    code = {401: "AUTHENTICATION_REQUIRED", 403: "AUTHORIZATION_FAILED", 404: "NOT_FOUND", 409: "CONFLICT"}.get(error.status_code, "REQUEST_FAILED")
+    return JSONResponse(status_code=error.status_code, content={"success": False, "error": {"code": code, "message": detail}})
 
 
 @app.exception_handler(RequestValidationError)

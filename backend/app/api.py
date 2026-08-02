@@ -55,7 +55,7 @@ def media_file(media: MediaService, path: str) -> FileResponse:
     candidate = media.validated_path(path)
     if not candidate.is_file():
         raise HTTPException(status_code=404, detail="Media file not found")
-    return FileResponse(candidate)
+    return FileResponse(candidate, media_type=media.media_type(path))
 
 
 router = APIRouter(prefix="/api/v1")

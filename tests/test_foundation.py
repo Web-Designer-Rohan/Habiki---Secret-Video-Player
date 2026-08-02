@@ -2,8 +2,9 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
-from backend.app.media import MediaService
+
 from backend.app.auth import PasswordHasher
+from backend.app.media import MediaService
 from backend.app.core import Settings
 from backend.app.database import Database
 from backend.app.repositories import ActivityRepository, UserRepository
@@ -61,6 +62,20 @@ class FoundationTests(unittest.TestCase):
                 activity.save_progress(user["id"], {**payload, "completed": True})
                 self.assertIsNone(activity.progress(user["id"], payload["episode_id"]))
                 self.assertEqual(len(activity.history(user["id"])), 1)
+
+    def test_media_service_accepts_only_supported_indexed_formats(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = Settings(media_dir=root, library_paths=[])
+            scanner = LibraryScanner(settings, logging.getLogger("test-media"))
+            media = MediaService(settings, scanner)
+            supported = root / "episode.mp4"
+            unsupported = root / "notes.txt"
+            supported.write_bytes(b"video")
+            unsupported.write_text("private", encoding="utf-8")
+            self.assertEqual(media.media_type(str(supported)), "video/mp4")
+            with self.assertRaises(Exception):
+                media.validated_path(str(unsupported))
 
     def test_public_library_removes_local_paths(self):
         library = {
