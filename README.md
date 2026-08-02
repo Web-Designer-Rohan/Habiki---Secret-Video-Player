@@ -138,7 +138,7 @@ README.md
 
 Documentation
 
-Project documentation is located in the "docs/" directory.
+Project documentation is located in the "docs/" directory. Legal and privacy surfaces are available from the application footer and at `/frontend/legal.html`, `/frontend/privacy.html`, and `/frontend/attribution.html`.
 
 Core documents include:
 
@@ -155,8 +155,20 @@ Core documents include:
 - Roadmap
 - Prompt Rules
 - Installation
+- Attribution
+- Asset policy
 
 These documents act as the project's single source of truth.
+
+---
+
+Privacy and offline operation
+
+Hibiki is local-first and designed to work offline after setup. Continue Watching, Favorites, Watch History, local authentication, localization preference, settings, and generated library metadata stay on the user's device. The current application has no analytics, advertising, cloud synchronization, telemetry, or user tracking. Users remain responsible for the rights to media and other assets they import.
+
+Third-party acknowledgements
+
+Hibiki vendors Anime.js 4.5.0 and Lucide 1.28.0 locally and uses Python, FastAPI, Uvicorn, Pydantic, SQLite, and optional FFmpeg tooling. Licenses, versions, purposes, and distribution notes are listed in `docs/ATTRIBUTION.md` and `assets/vendor/VERSIONS.md`.
 
 ---
 
@@ -180,7 +192,7 @@ v0.2.0 — Foundation implementation
 
 License
 
-License information will be added before the first public release.
+Hibiki is licensed under the GNU Affero General Public License, version 3 or later. See `LICENSE` for the complete terms. The AGPL was chosen to keep this self-hosted application modifiable and shareable, including source-sharing expectations for modified network-accessible versions, while preserving offline use.
 
 ---
 

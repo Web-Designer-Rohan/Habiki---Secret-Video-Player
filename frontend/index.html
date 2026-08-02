@@ -32,6 +32,7 @@
       <p class="topbar__tagline" data-i18n="brand_tagline">आपकी स्थानीय लाइब्रेरी, आपके ध्यान में।</p>
       <div class="topbar__actions">
         <label class="language-select"><span class="sr-only" data-i18n="language">भाषा</span><select id="language-select" aria-label="Language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select></label>
+        <button class="icon-button" id="about-open" type="button" title="About Hibiki" aria-label="About Hibiki">i</button>
         <button class="icon-button" id="login-open" type="button" title="Sign in" aria-label="Sign in">↗</button>
       </div>
     </header>
@@ -90,12 +91,13 @@
           <article class="admin-card"><p class="eyebrow">05 / private room</p><h3 data-i18n="dashboard">डैशबोर्ड</h3><p>Scan local media, maintain metadata, and keep the library in order.</p><button class="button button--line" id="scan-library" type="button">Scan library ↗</button><span class="admin-card__status" id="scan-status"></span></article>
           <article class="admin-card" id="settings"><p class="eyebrow">05 / preferences</p><h3 data-i18n="settings">सेटिंग्स</h3><p>Language and playback preferences stay on this device.</p><button class="button button--line" id="settings-open" type="button">Open settings ↗</button></article>
         </section>
-        <footer class="footer"><span>Hibiki / v0.2.0</span><span>All media remains local.</span></footer>
+        <footer class="footer"><span>Hibiki / v0.2.0 · AGPL-3.0-or-later</span><span>Local-first / offline by design</span><nav class="footer__links" aria-label="Legal and project links"><button class="footer__link" id="about-footer" type="button">About</button><a class="footer__link" href="/frontend/legal.html">Legal</a><a class="footer__link" href="/frontend/privacy.html">Privacy</a><a class="footer__link" href="/frontend/attribution.html">Attribution</a><a class="footer__link" href="/LICENSE">License</a><a class="footer__link" href="https://github.com/Web-Designer-Rohan/Habiki---Secret-Video-Player" rel="noopener noreferrer">GitHub</a></nav></footer>
       </div>
     </div>
   </main>
 
   <dialog class="modal" id="login-dialog" aria-labelledby="login-title"><form class="modal__form" id="login-form" method="dialog"><button class="modal__close" id="login-close" type="button" aria-label="Close">×</button><p class="eyebrow">Private access</p><h2 id="login-title">Sign in</h2><p class="modal__hint">Use your local Mochi account to access administration.</p><label><span data-i18n="username">Username</span><input id="username" name="username" required autocomplete="username"></label><label><span data-i18n="password">Password</span><input id="password" name="password" required type="password" autocomplete="current-password"></label><p class="form-error" id="login-error" role="alert" hidden></p><button class="button button--primary" type="submit" data-i18n="sign_in">Sign in</button></form></dialog>
+  <dialog class="modal about-dialog" id="about-dialog" aria-labelledby="about-title"><div class="modal__form"><button class="modal__close" id="about-close" type="button" aria-label="Close">×</button><p class="eyebrow">Hibiki / about</p><h2 id="about-title">About Hibiki</h2><p class="modal__hint">A private, local-first library for the stories you keep close.</p><div class="about-dialog__badges"><span class="badge">Local-first</span><span class="badge">Offline</span></div><dl class="about-dialog__details"><div><dt>Version</dt><dd>v0.2.0</dd></div><div><dt>Build date</dt><dd>2026-08-02</dd></div><div><dt>License</dt><dd><a href="/LICENSE">AGPL-3.0-or-later</a></dd></div><div><dt>Credits</dt><dd><a href="/frontend/attribution.html">Open-source contributors</a></dd></div></dl><div class="about-dialog__actions"><a class="button button--line" href="/frontend/legal.html">Legal notice ↗</a><a class="button button--line" href="/frontend/privacy.html">Privacy ↗</a></div></div></dialog>
   <script src="/assets/vendor/anime/anime.umd.min.js"></script>
   <script type="module" src="/frontend/js/main.js"></script>
 </body>

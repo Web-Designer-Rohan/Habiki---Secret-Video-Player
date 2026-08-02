@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hibiki local data and privacy information.">
+  <title>Hibiki — Privacy</title>
+  <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body class="legal-page">
+  <main class="legal-shell">
+    <header class="legal-header">
+      <a class="wordmark" href="/"><span class="wordmark__mark">H</span><span>Hibiki</span></a>
+      <a class="button button--line" href="/">Return to library ↗</a>
+    </header>
+    <article class="legal-content">
+      <p class="eyebrow">Hibiki / privacy</p>
+      <h1>Privacy, kept local</h1>
+      <p class="legal-lede">Hibiki is built for a personal library on your own device. This page describes what the current application stores and what it does not collect.</p>
+      <section class="privacy-banner"><span class="privacy-badge">LOCAL ONLY</span><p>No analytics · No advertising · No cloud sync · No telemetry · No user tracking</p></section>
+      <div class="legal-grid">
+        <section class="legal-card"><p class="eyebrow">01 / activity</p><h2>Viewing data</h2><p>When you use the authenticated activity features, Hibiki stores Continue Watching progress, Favorites, and Playback History in the local SQLite database. This includes episode identifiers, anime identifiers, season and episode numbers, playback positions, and timestamps.</p></section>
+        <section class="legal-card"><p class="eyebrow">02 / preferences</p><h2>Your settings</h2><p>Hibiki stores application configuration locally, including the configured default language and player or dashboard settings. The authenticated settings API can also store user preference key/value pairs in the local SQLite database. Changing the language selector in the current UI changes the active page state; it is not sent to a cloud service.</p></section>
+        <section class="legal-card"><p class="eyebrow">03 / authentication</p><h2>Local accounts</h2><p>Local authentication stores usernames, securely hashed passwords, roles, and opaque session records in the local database. Passwords are not stored in plaintext. Authentication is not connected to an online identity provider.</p></section>
+        <section class="legal-card"><p class="eyebrow">04 / library</p><h2>Media metadata</h2><p>The backend stores locally generated library metadata in JSON, including titles, seasons, episode details, and indexed local media references. Your media files remain on the configured local filesystem.</p></section>
+      </div>
+      <section class="legal-section">
+        <p class="eyebrow">05 / never sent</p>
+        <h2>No tracking layer</h2>
+        <ul class="legal-list"><li>Hibiki has no analytics service.</li><li>Hibiki has no advertising or ad profiling.</li><li>Hibiki has no cloud synchronization.</li><li>Hibiki has no telemetry or background reporting.</li><li>Hibiki does not track users across websites or devices.</li><li>Hibiki does not transmit your library, watch history, favorites, credentials, or settings to a remote Hibiki or third-party server. Login and authenticated activity requests stay between your browser and the local Hibiki backend you run.</li></ul>
+      </section>
+      <section class="legal-section">
+        <p class="eyebrow">06 / your control</p>
+        <h2>Local responsibility</h2>
+        <p>You control the device, database, configuration, logs, and media folders where Hibiki runs. Back up or remove those local files according to your needs. If you expose the application beyond your trusted device or network, you are responsible for securing that environment.</p>
+      </section>
+      <p class="legal-note">This page describes the current repository implementation and is not legal advice. Review it again if future versions add remote access, integrations, crash reporting, or synchronization.</p>
+    </article>
+    <footer class="legal-footer"><span>Hibiki / v0.2.0</span><span><a href="/frontend/legal.html">Legal</a> · <a href="/frontend/attribution.html">Attribution</a> · <a href="/LICENSE">License</a></span></footer>
+  </main>
+</body>
+</html>

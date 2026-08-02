@@ -250,15 +250,15 @@ Prefer reusable utility classes and component styles.
 
 ---
 
-TypeScript Guidelines
+JavaScript Guidelines
 
 Prefer:
 
-- Strong typing
-- Explicit interfaces
+- Modern JavaScript modules
+- Explicit data shapes
 - Predictable modules
 
-Avoid unnecessary use of "any".
+Avoid implicit global state and duplicated browser logic.
 
 ---
 

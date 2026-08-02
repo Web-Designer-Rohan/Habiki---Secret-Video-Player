@@ -59,9 +59,22 @@ async def validation_error(_: Request, error: RequestValidationError):
     return JSONResponse(status_code=422, content={"success": False, "error": {"code": "VALIDATION_ERROR", "message": str(error)}})
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 @app.get("/", include_in_schema=False)
 async def frontend_index():
-    return FileResponse(Path(__file__).resolve().parents[2] / "frontend" / "index.html")
+    return FileResponse(PROJECT_ROOT / "frontend" / "index.html")
+
+
+@app.get("/LICENSE", include_in_schema=False)
+async def project_license():
+    return FileResponse(PROJECT_ROOT / "LICENSE", media_type="text/plain")
+
+
+@app.get("/docs/ATTRIBUTION.md", include_in_schema=False)
+async def project_attribution():
+    return FileResponse(PROJECT_ROOT / "docs" / "ATTRIBUTION.md", media_type="text/markdown")
 
 
 @app.head("/", include_in_schema=False)

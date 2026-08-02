@@ -1,5 +1,3 @@
-DECISIONS.md
-
 ---
 
 title: Architecture Decision Log
@@ -485,6 +483,34 @@ Absolute local paths are implementation details and should not cross the API bou
 Consequences
 
 The frontend uses `/player/source/{episodeId}` and the returned episode-specific file routes for playback. Any future media route must preserve root validation and indexed-resource checks.
+
+---
+
+D-016
+
+Date
+
+2026-08-02
+
+Status
+
+Accepted
+
+Category
+
+Legal and Privacy
+
+Decision
+
+Hibiki is released under the GNU Affero General Public License, version 3 or later, with dedicated in-application Legal, Privacy, Attribution, and About surfaces. The current application stores library metadata, local authentication records, settings, Continue Watching, Favorites, and Watch History on the user's device and does not include analytics, advertising, cloud synchronization, telemetry, or user tracking.
+
+Reason
+
+AGPL-3.0-or-later preserves the ability to study, modify, and share this self-hosted application, including source-sharing expectations for modified network-accessible versions. Clear local privacy notices and attribution links are required for an application with an interactive web interface and vendored open-source assets.
+
+Consequences
+
+The project must keep `LICENSE`, `docs/ATTRIBUTION.md`, and `docs/ASSETS.md` synchronized with the implementation. The frontend must expose prominent links to the license, legal notice, privacy page, and attribution record. Future network integrations or data collection require a new privacy and architecture review.
 
 ---
 

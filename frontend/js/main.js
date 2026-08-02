@@ -10,6 +10,7 @@ const elements = {
   libraryCount: document.querySelector("#library-count"),
   search: document.querySelector("#library-search"),
   loginDialog: document.querySelector("#login-dialog"),
+  aboutDialog: document.querySelector("#about-dialog"),
   loginForm: document.querySelector("#login-form"),
   loginError: document.querySelector("#login-error"),
   scanStatus: document.querySelector("#scan-status"),
@@ -249,6 +250,9 @@ document.querySelector("#enter-library").addEventListener("click", openApplicati
 document.querySelector("#swipe-entry").addEventListener("click", openApplication);
 document.querySelector("#login-open").addEventListener("click", () => elements.loginDialog.showModal());
 document.querySelector("#login-close").addEventListener("click", () => elements.loginDialog.close());
+document.querySelector("#about-open").addEventListener("click", () => elements.aboutDialog.showModal());
+document.querySelector("#about-footer").addEventListener("click", () => elements.aboutDialog.showModal());
+document.querySelector("#about-close").addEventListener("click", () => elements.aboutDialog.close());
 elements.loginForm.addEventListener("submit", submitLogin);
 document.querySelector("#scan-library").addEventListener("click", scanLibrary);
 elements.search.addEventListener("input", (event) => refreshLibrary(event.target.value));
