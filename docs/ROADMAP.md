@@ -52,6 +52,7 @@ Progress
 - ✅ Versioned REST API foundation implemented
 - ✅ Frontend shell and custom player foundation implemented
 - ✅ Activity-driven player and library UI integration
+- ✅ Season and episode browsing in the library UI
 - ⏳ Dashboard management, metadata editing, and thumbnail generation
 
 ---

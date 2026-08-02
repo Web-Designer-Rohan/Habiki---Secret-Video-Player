@@ -83,6 +83,7 @@ Features:
 - Episode thumbnails
 - Local metadata
 - Fast searching
+- Season and episode browsing in the library UI
 
 ---
 

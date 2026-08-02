@@ -67,18 +67,30 @@ function renderLibrary(library = state.library) {
     title.textContent = entry.title;
     const meta = document.createElement("p");
     meta.className = "library-card__meta";
-    meta.textContent = `${entry.seasons.length} season${entry.seasons.length === 1 ? "" : "s"}`;
+    meta.textContent = `${entry.seasons.length} ${localizedCount("season", entry.seasons.length)}`;
+    const browser = document.createElement("div");
+    browser.className = "library-card__browser";
+    entry.seasons.forEach((season) => {
+      const seasonDetails = document.createElement("details");
+      seasonDetails.className = "season-details";
+      if (season === entry.seasons[0]) seasonDetails.open = true;
+      const seasonSummary = document.createElement("summary");
+      seasonSummary.textContent = `${state.messages.season || "Season"} ${String(season.number).padStart(2, "0")} · ${season.episodes.length} ${localizedCount("episode", season.episodes.length)}`;
+      const episodes = document.createElement("div");
+      episodes.className = "episode-list";
+      season.episodes.forEach((episode) => {
+        const play = document.createElement("button");
+        play.className = "episode-button";
+        play.type = "button";
+        play.textContent = `${String(episode.number).padStart(2, "0")} · ${episode.title}`;
+        play.addEventListener("click", () => playEpisode(enrichEpisode(episode, entry, season)));
+        episodes.append(play);
+      });
+      seasonDetails.append(seasonSummary, episodes);
+      browser.append(seasonDetails);
+    });
     const actions = document.createElement("div");
     actions.className = "library-card__actions";
-    const firstEpisode = entry.seasons?.[0]?.episodes?.[0];
-    if (firstEpisode) {
-      const play = document.createElement("button");
-      play.className = "library-card__play";
-      play.type = "button";
-      play.textContent = `${state.messages.play || "Play"} ↗`;
-      play.addEventListener("click", () => playEpisode(enrichEpisode(firstEpisode, entry, entry.seasons[0])));
-      actions.append(play);
-    }
     const favorite = document.createElement("button");
     favorite.className = "library-card__favorite";
     favorite.type = "button";
@@ -86,9 +98,15 @@ function renderLibrary(library = state.library) {
     setFavoriteButton(favorite, entry.title, isFavorite);
     favorite.addEventListener("click", () => toggleFavorite(entry.id, entry.title, favorite));
     actions.append(favorite);
-    card.append(art, title, meta, actions);
+    card.append(art, title, meta, browser, actions);
     elements.libraryGrid.append(card);
   });
+}
+
+function localizedCount(key, count) {
+  const singular = state.messages[key] || key;
+  const plural = state.messages[`${key}s`] || `${key}s`;
+  return count === 1 ? singular : plural;
 }
 
 function enrichEpisode(episode, anime, season) {
