@@ -1,0 +1,9 @@
+.venv/
+
+# Local runtime state
+data/database.db
+config/initial-admin.txt
+logs/
+
+# User media and generated files
+media/**

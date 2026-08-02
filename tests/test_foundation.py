@@ -1,0 +1,89 @@
+import logging
+import tempfile
+import unittest
+from pathlib import Path
+from backend.app.media import MediaService
+from backend.app.auth import PasswordHasher
+from backend.app.core import Settings
+from backend.app.database import Database
+from backend.app.repositories import ActivityRepository, UserRepository
+from backend.app.scanner import LibraryScanner
+
+
+class FoundationTests(unittest.TestCase):
+    def test_password_hash_is_verifiable_and_not_plaintext(self):
+        password = "a secure local password"
+        encoded = PasswordHasher.hash(password)
+        self.assertNotIn(password, encoded)
+        self.assertTrue(PasswordHasher.verify(password, encoded))
+        self.assertFalse(PasswordHasher.verify("wrong password", encoded))
+
+    def test_database_migration_creates_documented_tables(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Database(Path(directory) / "database.db")
+            database.initialize()
+            with database.connect() as connection:
+                tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+            self.assertTrue({"users", "favorites", "continue_watching", "watch_history", "settings", "sessions"} <= tables)
+
+    def test_scanner_writes_empty_library_without_media(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = Settings(
+                data_dir=root / "data",
+                config_dir=root / "config",
+                media_dir=root / "media",
+                logs_dir=root / "logs",
+                library_path=root / "data" / "library.json",
+                library_paths=[],
+            )
+            library = LibraryScanner(settings, logging.getLogger("test-scanner")).scan()
+            self.assertEqual(library["anime"], [])
+            self.assertTrue(settings.library_path.exists())
+
+    def test_activity_progress_updates_history_and_can_be_removed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Database(Path(directory) / "database.db")
+            database.initialize()
+            with database.connect() as connection:
+                user = UserRepository(connection).create("mochi", "hash", "mochi")
+                activity = ActivityRepository(connection)
+                payload = {
+                    "episode_id": "show-s01-e01",
+                    "anime_id": "show",
+                    "season_number": 1,
+                    "episode_number": 1,
+                    "playback_position": 42.5,
+                }
+                activity.save_progress(user["id"], payload)
+                self.assertEqual(activity.progress(user["id"], payload["episode_id"])["playback_position"], 42.5)
+                self.assertEqual(activity.history(user["id"]), [])
+                activity.save_progress(user["id"], {**payload, "completed": True})
+                self.assertIsNone(activity.progress(user["id"], payload["episode_id"]))
+                self.assertEqual(len(activity.history(user["id"])), 1)
+
+    def test_public_library_removes_local_paths(self):
+        library = {
+            "version": 1,
+            "anime": [{
+                "id": "show",
+                "title": "Show",
+                "path": "/private/media/Show",
+                "seasons": [{"number": 1, "episodes": [{
+                    "id": "show-s01-e01",
+                    "video_path": "/private/media/Show/Season 01/Episode 01.mp4",
+                    "subtitle_paths": ["/private/media/Show/Season 01/Episode 01.en.vtt"],
+                    "thumbnail_path": "/private/media/Show/Season 01/Episode 01.webp",
+                    "number": 1,
+                }]}],
+            }],
+        }
+        public = MediaService.public_library(library)
+        serialized = str(public)
+        self.assertNotIn("/private/media", serialized)
+        self.assertEqual(public["anime"][0]["seasons"][0]["episodes"][0]["id"], "show-s01-e01")
+
+
+
+if __name__ == "__main__":
+    unittest.main()

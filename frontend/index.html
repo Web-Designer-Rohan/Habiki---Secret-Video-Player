@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <meta name="description" content="Hibiki — your private local anime library.">
+  <title>Hibiki — Local library</title>
+  <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body>
+  <div class="app-noise" aria-hidden="true"></div>
+  <section class="welcome" id="welcome" aria-labelledby="welcome-title">
+    <div class="welcome__backdrop" aria-hidden="true"></div>
+    <div class="welcome__content">
+      <p class="eyebrow" data-i18n="welcome_kicker">ऑफ़लाइन / निजी / आपकी</p>
+      <h1 id="welcome-title" class="display-title" data-i18n="welcome_title">Hibiki</h1>
+      <p class="welcome__body" data-i18n="welcome_body">आपके पसंदीदा किस्सों के लिए एक शांत जगह।</p>
+      <button class="button button--primary welcome__enter" id="enter-library" type="button">
+        <span data-i18n="enter_library">लाइब्रेरी खोलें</span><span aria-hidden="true">↗</span>
+      </button>
+      <button class="welcome__swipe" id="swipe-entry" type="button" aria-label="Enter library">
+        <span>↓</span><span class="welcome__swipe-line" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="welcome__meta" aria-hidden="true"><span>H / 01</span><span>Hibiki local system</span></div>
+  </section>
+
+  <main class="application" id="application" hidden>
+    <header class="topbar">
+      <a class="wordmark" href="#top" aria-label="Hibiki home"><span class="wordmark__mark">H</span><span>Hibiki</span></a>
+      <p class="topbar__tagline" data-i18n="brand_tagline">आपकी स्थानीय लाइब्रेरी, आपके ध्यान में।</p>
+      <div class="topbar__actions">
+        <label class="language-select"><span class="sr-only" data-i18n="language">भाषा</span><select id="language-select" aria-label="Language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select></label>
+        <button class="icon-button" id="login-open" type="button" title="Sign in" aria-label="Sign in">↗</button>
+      </div>
+    </header>
+
+    <div class="layout" id="top">
+      <aside class="rail" aria-label="Primary navigation">
+        <p class="rail__index">01—04</p>
+        <nav class="rail__nav">
+          <a class="rail__link rail__link--active" href="#library"><span>01</span><span data-i18n="library">लाइब्रेरी</span></a>
+          <a class="rail__link" href="#continue"><span>02</span><span data-i18n="continue_watching">देखना जारी रखें</span></a>
+          <a class="rail__link" href="#favorites"><span>03</span><span data-i18n="favorites">पसंदीदा</span></a>
+          <a class="rail__link" href="#dashboard"><span>04</span><span data-i18n="dashboard">डैशबोर्ड</span></a>
+        </nav>
+        <p class="rail__foot">PRIVATE<br>MEDIA / 01</p>
+      </aside>
+
+      <div class="content">
+        <section class="hero" aria-labelledby="hero-title">
+          <div><p class="eyebrow">Hibiki / local library</p><h2 id="hero-title">The stories<br><em>stay close.</em></h2></div>
+          <div class="hero__note"><span class="status-dot"></span><span data-i18n="ready">तैयार</span><span class="hero__rule"></span><span id="library-count">0 titles</span></div>
+        </section>
+
+        <section class="player-panel" id="player" aria-labelledby="player-heading">
+          <div class="section-heading"><div><p class="eyebrow">Now playing</p><h3 id="player-heading">A quiet frame</h3></div><span class="section-heading__index">PLAY / 00</span></div>
+          <div class="player" id="player-shell">
+            <video id="video" preload="metadata" aria-label="Hibiki video player"></video>
+            <div class="player__empty" id="player-empty"><span class="player__empty-mark">◇</span><span data-i18n="player_empty">शुरू करने के लिए कोई एपिसोड चुनें।</span></div>
+            <div class="player__loading" id="player-loading" hidden>Loading</div>
+            <div class="player__error" id="player-error" hidden role="alert">This episode could not be played.</div>
+            <div class="player__controls" id="player-controls">
+              <button class="player__control" id="play-toggle" type="button" aria-label="Play">▶</button>
+              <input class="player__timeline" id="timeline" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position">
+              <span class="player__time" id="time-display">00:00 / 00:00</span>
+              <button class="player__control" id="mute-toggle" type="button" aria-label="Volume">◖</button>
+              <input class="player__volume" id="volume" type="range" min="0" max="1" value="1" step="0.05" aria-label="Volume">
+              <select class="player__subtitle" id="subtitle" aria-label="Subtitles"><option value="">Subtitles off</option></select>
+              <select class="player__speed" id="speed" aria-label="Playback speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+              <button class="player__control" id="fullscreen-toggle" type="button" aria-label="Fullscreen">⛶</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="library-section" id="library" aria-labelledby="library-heading">
+          <div class="section-heading"><div><p class="eyebrow">Collection / 01</p><h3 id="library-heading" data-i18n="library">लाइब्रेरी</h3></div><label class="search"><span class="sr-only" data-i18n="search">अपनी लाइब्रेरी खोजें</span><input id="library-search" type="search" data-i18n-placeholder="search" placeholder="अपनी लाइब्रेरी खोजें"><span>⌕</span></label></div>
+          <div class="library-grid" id="library-grid"></div>
+          <div class="empty-state" id="library-empty"><span class="empty-state__number">—</span><div><h4 data-i18n="empty_library">आपकी लाइब्रेरी तैयार है।</h4><p data-i18n="empty_library_hint">एक Anime फ़ोल्डर जोड़ें, फिर डैशबोर्ड से स्कैन करें।</p></div></div>
+        </section>
+
+        <section class="split-sections">
+          <section class="compact-section" id="continue" aria-labelledby="continue-heading"><div class="section-heading"><h3 id="continue-heading" data-i18n="continue_watching">देखना जारी रखें</h3><span class="section-heading__index">02</span></div><div class="activity-list" id="continue-list"></div><div class="empty-mini" id="continue-empty">Nothing paused here yet.</div></section>
+          <section class="compact-section" id="favorites" aria-labelledby="favorites-heading"><div class="section-heading"><h3 id="favorites-heading" data-i18n="favorites">पसंदीदा</h3><span class="section-heading__index">03</span></div><div class="activity-list" id="favorites-list"></div><div class="empty-mini" id="favorites-empty">Your marked stories appear here.</div></section>
+          <section class="compact-section" id="history" aria-labelledby="history-heading"><div class="section-heading"><h3 id="history-heading">History</h3><span class="section-heading__index">04</span></div><div class="activity-list" id="history-list"></div><div class="empty-mini" id="history-empty">Finished episodes appear here.</div><button class="button button--line activity-clear" id="history-clear" type="button" hidden>Clear history</button></section>
+        </section>
+
+        <section class="admin-grid" id="dashboard">
+          <article class="admin-card"><p class="eyebrow">05 / private room</p><h3 data-i18n="dashboard">डैशबोर्ड</h3><p>Scan local media, maintain metadata, and keep the library in order.</p><button class="button button--line" id="scan-library" type="button">Scan library ↗</button><span class="admin-card__status" id="scan-status"></span></article>
+          <article class="admin-card" id="settings"><p class="eyebrow">05 / preferences</p><h3 data-i18n="settings">सेटिंग्स</h3><p>Language and playback preferences stay on this device.</p><button class="button button--line" id="settings-open" type="button">Open settings ↗</button></article>
+        </section>
+        <footer class="footer"><span>Hibiki / v0.2.0</span><span>All media remains local.</span></footer>
+      </div>
+    </div>
+  </main>
+
+  <dialog class="modal" id="login-dialog" aria-labelledby="login-title"><form class="modal__form" id="login-form" method="dialog"><button class="modal__close" id="login-close" type="button" aria-label="Close">×</button><p class="eyebrow">Private access</p><h2 id="login-title">Sign in</h2><p class="modal__hint">Use your local Mochi account to access administration.</p><label><span data-i18n="username">Username</span><input id="username" name="username" required autocomplete="username"></label><label><span data-i18n="password">Password</span><input id="password" name="password" required type="password" autocomplete="current-password"></label><p class="form-error" id="login-error" role="alert" hidden></p><button class="button button--primary" type="submit" data-i18n="sign_in">Sign in</button></form></dialog>
+  <script src="/assets/vendor/anime/anime.umd.min.js"></script>
+  <script type="module" src="/frontend/js/main.js"></script>
+</body>
+</html>
