@@ -166,7 +166,7 @@ Current Phase
 
 Foundation implementation in progress
 
-The backend foundation, local authentication, library scanner, API boundary, and frontend shell are implemented. User activity and player integration are in progress.
+The backend foundation, local authentication, library scanner, API boundary, custom player, activity persistence, and season/episode browsing are implemented. Dashboard management, metadata editing, thumbnails, and remaining presentation polish are in progress.
 
 ---
 
