@@ -156,30 +156,41 @@ def episodes(anime_id: str, request: Request):
     return success([episode for season in season_list for episode in season.get("episodes", [])])
 
 
-@router.get("/player/source/{episode_id}")
-def player_source(episode_id: str, request: Request):
+def indexed_episode(request: Request, episode_id: str) -> dict:
+    """Return an indexed episode or a clean 404 for placeholders without local media.
+
+    Placeholder episodes (metadata-only entries created when media is not yet
+    imported) have no video path; they are reported as not available instead of
+    failing with an internal error.
+    """
     episode = request.app.state.media.find_episode(episode_id)
     if not episode:
         raise HTTPException(status_code=404, detail="Episode not found")
+    if not episode.get("video_path"):
+        raise HTTPException(status_code=404, detail="Episode media is not available locally")
+    return episode
+
+
+@router.get("/player/source/{episode_id}")
+def player_source(episode_id: str, request: Request):
+    episode = indexed_episode(request, episode_id)
     return success({
         "episode_id": episode_id,
         "url": f"/api/v1/player/file/{episode_id}",
-        "subtitles": [f"/api/v1/player/subtitle/{episode_id}/{index}" for index, _ in enumerate(episode["subtitle_paths"])],
+        "subtitles": [f"/api/v1/player/subtitle/{episode_id}/{index}" for index, _ in enumerate(episode.get("subtitle_paths", []))],
     })
 
 
 @router.get("/player/file/{episode_id}")
 def player_file(episode_id: str, request: Request):
-    episode = request.app.state.media.find_episode(episode_id)
-    if not episode:
-        raise HTTPException(status_code=404, detail="Episode not found")
+    episode = indexed_episode(request, episode_id)
     return media_file(request.app.state.media, episode["video_path"])
 
 
 @router.get("/player/subtitle/{episode_id}/{subtitle_index}")
 def player_subtitle(episode_id: str, subtitle_index: int, request: Request):
     episode = request.app.state.media.find_episode(episode_id)
-    if not episode or subtitle_index < 0 or subtitle_index >= len(episode["subtitle_paths"]):
+    if not episode or subtitle_index < 0 or subtitle_index >= len(episode.get("subtitle_paths", [])):
         raise HTTPException(status_code=404, detail="Subtitle not found")
     return media_file(request.app.state.media, episode["subtitle_paths"][subtitle_index])
 
@@ -299,7 +310,7 @@ def update_config(payload: ConfigPayload, request: Request, _: Annotated[dict, D
 
 @router.post("/dashboard/thumbnails")
 def thumbnails(_: Annotated[dict, Depends(require_mochi)]):
-    return success({"generated": 0, "message": "Thumbnail generation is performed during media scanning."})
+    return success({"generated": 0, "message": "Run scripts/generate_thumbnails.py after adding media; generated thumbnails are discovered by the scanner."})
 
 
 @router.get("/health")

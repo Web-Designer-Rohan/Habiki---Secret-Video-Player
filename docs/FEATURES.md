@@ -243,7 +243,7 @@ Administrator settings:
 
 Media Management
 
-Status: Planned
+Status: In Progress
 
 Features:
 
@@ -252,6 +252,8 @@ Features:
 - Missing file detection
 - Thumbnail generation
 - Configuration management
+
+The asset and validation pipeline (scripts/import_assets.py, build_library.py, generate_thumbnails.py, validate_library.py, project_size.py) is implemented; dashboard wiring is pending.
 
 ---
 

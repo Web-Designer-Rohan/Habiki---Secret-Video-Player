@@ -223,6 +223,8 @@ GET
 
 Return an indexed WebVTT subtitle file.
 
+Metadata-only placeholder episodes (created when media is not yet imported, see ASSETS.md) have no indexed file. For these, `/player/source` and `/player/file` return 404 with `Episode media is not available locally` until a library scan indexes real media.
+
 ---
 
 POST

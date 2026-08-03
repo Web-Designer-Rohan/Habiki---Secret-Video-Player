@@ -1,25 +1,52 @@
 {
   "version": 1,
-  "scanned_at": "2026-08-03T05:15:00+00:00",
+  "scanned_at": "2026-08-03T06:28:28.568628+00:00",
   "anime": [
     {
       "id": "jujutsu-kaisan",
       "title": "Jujutsu Kaisan",
+      "poster": "/root/Habiki---Secret-Video-Player/media/Jujutsu Kaisan/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/Jujutsu Kaisan",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "jujutsu-kaisan-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "jujutsu-kaisan-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "jujutsu-kaisan-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "jujutsu-kaisan-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "jujutsu-kaisan-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "jujutsu-kaisan-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         },
         {
           "number": 2,
           "episodes": [
-            { "id": "jujutsu-kaisan-s02-e01", "number": 1, "title": "Episode 01" },
-            { "id": "jujutsu-kaisan-s02-e02", "number": 2, "title": "Episode 02" },
-            { "id": "jujutsu-kaisan-s02-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "jujutsu-kaisan-s02-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "jujutsu-kaisan-s02-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "jujutsu-kaisan-s02-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
@@ -27,21 +54,48 @@
     {
       "id": "demon-slayer",
       "title": "Demon Slayer",
+      "poster": "/root/Habiki---Secret-Video-Player/media/Demon Slayer/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/Demon Slayer",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "demon-slayer-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "demon-slayer-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "demon-slayer-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "demon-slayer-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "demon-slayer-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "demon-slayer-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         },
         {
           "number": 2,
           "episodes": [
-            { "id": "demon-slayer-s02-e01", "number": 1, "title": "Episode 01" },
-            { "id": "demon-slayer-s02-e02", "number": 2, "title": "Episode 02" },
-            { "id": "demon-slayer-s02-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "demon-slayer-s02-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "demon-slayer-s02-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "demon-slayer-s02-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
@@ -49,21 +103,48 @@
     {
       "id": "sololeveling",
       "title": "Sololeveling",
+      "poster": "/root/Habiki---Secret-Video-Player/media/Sololeveling/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/Sololeveling",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "sololeveling-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "sololeveling-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "sololeveling-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "sololeveling-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "sololeveling-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "sololeveling-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         },
         {
           "number": 2,
           "episodes": [
-            { "id": "sololeveling-s02-e01", "number": 1, "title": "Episode 01" },
-            { "id": "sololeveling-s02-e02", "number": 2, "title": "Episode 02" },
-            { "id": "sololeveling-s02-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "sololeveling-s02-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "sololeveling-s02-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "sololeveling-s02-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
@@ -71,21 +152,48 @@
     {
       "id": "aot",
       "title": "AOT",
+      "poster": "/root/Habiki---Secret-Video-Player/media/AOT/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/AOT",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "aot-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "aot-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "aot-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "aot-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "aot-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "aot-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         },
         {
           "number": 2,
           "episodes": [
-            { "id": "aot-s02-e01", "number": 1, "title": "Episode 01" },
-            { "id": "aot-s02-e02", "number": 2, "title": "Episode 02" },
-            { "id": "aot-s02-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "aot-s02-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "aot-s02-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "aot-s02-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
@@ -93,13 +201,28 @@
     {
       "id": "deathnote",
       "title": "Deathnote",
+      "poster": "/root/Habiki---Secret-Video-Player/media/Deathnote/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/Deathnote",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "deathnote-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "deathnote-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "deathnote-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "deathnote-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "deathnote-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "deathnote-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
@@ -107,21 +230,66 @@
     {
       "id": "gachiakuta",
       "title": "Gachiakuta",
+      "poster": "/root/Habiki---Secret-Video-Player/media/Gachiakuta/poster.webp",
+      "banner": null,
+      "path": "/root/Habiki---Secret-Video-Player/media/Gachiakuta",
       "seasons": [
         {
           "number": 1,
           "episodes": [
-            { "id": "gachiakuta-s01-e01", "number": 1, "title": "Episode 01" },
-            { "id": "gachiakuta-s01-e02", "number": 2, "title": "Episode 02" },
-            { "id": "gachiakuta-s01-e03", "number": 3, "title": "Episode 03" }
+            {
+              "id": "gachiakuta-s01-e01",
+              "number": 1,
+              "title": "Episode 01"
+            },
+            {
+              "id": "gachiakuta-s01-e02",
+              "number": 2,
+              "title": "Episode 02"
+            },
+            {
+              "id": "gachiakuta-s01-e03",
+              "number": 3,
+              "title": "Episode 03"
+            }
           ]
         }
       ]
     },
-    { "id": "chrome-dino", "title": "Chrome Dino", "seasons": [] },
-    { "id": "edge-surf", "title": "Edge Surf", "seasons": [] },
-    { "id": "edge-surf-1", "title": "Edge surf 1", "seasons": [] },
-    { "id": "edge-surf-2", "title": "Edge surf 2", "seasons": [] },
-    { "id": "coding-projects", "title": "Coding Projects", "seasons": [] }
+    {
+      "id": "chrome-dino",
+      "title": "Chrome Dino",
+      "poster": null,
+      "banner": null,
+      "seasons": []
+    },
+    {
+      "id": "edge-surf",
+      "title": "Edge Surf",
+      "poster": null,
+      "banner": null,
+      "seasons": []
+    },
+    {
+      "id": "edge-surf-1",
+      "title": "Edge surf 1",
+      "poster": null,
+      "banner": null,
+      "seasons": []
+    },
+    {
+      "id": "edge-surf-2",
+      "title": "Edge surf 2",
+      "poster": null,
+      "banner": null,
+      "seasons": []
+    },
+    {
+      "id": "coding-projects",
+      "title": "Coding Projects",
+      "poster": null,
+      "banner": null,
+      "seasons": []
+    }
   ]
 }
