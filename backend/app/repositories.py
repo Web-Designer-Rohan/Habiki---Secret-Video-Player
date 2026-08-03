@@ -55,7 +55,7 @@ class SessionRepository:
     def get_user(self, session_id: str) -> dict[str, Any] | None:
         row = self.connection.execute(
             "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id "
-            "WHERE sessions.session_id = ? AND sessions.expires_at > datetime('now')",
+            "WHERE sessions.session_id = ? AND unixepoch(sessions.expires_at) > unixepoch('now')",
             (session_id,),
         ).fetchone()
         return row_dict(row)
@@ -64,7 +64,7 @@ class SessionRepository:
         self.connection.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
 
     def delete_expired(self) -> None:
-        self.connection.execute("DELETE FROM sessions WHERE expires_at <= datetime('now')")
+        self.connection.execute("DELETE FROM sessions WHERE unixepoch(expires_at) <= unixepoch('now')")
 
 
 class ActivityRepository:

@@ -14,13 +14,9 @@ export async function request(path, options = {}) {
 }
 
 export const api = {
-  health: () => request("/health"),
-  version: () => request("/version"),
-  languages: () => request("/languages"),
   library: (query = "") => request(`/library${query ? `/search?query=${encodeURIComponent(query)}` : ""}`),
   session: () => request("/auth/session"),
   login: (credentials) => request("/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
-  logout: () => request("/auth/logout", { method: "POST" }),
   scan: () => request("/dashboard/library/scan", { method: "POST" }),
   episodeSource: (episodeId) => request(`/player/source/${encodeURIComponent(episodeId)}`),
   progress: (episodeId) => request(`/player/progress/${encodeURIComponent(episodeId)}`),
@@ -31,4 +27,6 @@ export const api = {
   removeFavorite: (animeId) => request(`/favorites/${encodeURIComponent(animeId)}`, { method: "DELETE" }),
   history: () => request("/history"),
   clearHistory: () => request("/history", { method: "DELETE" }),
+  settings: () => request("/settings"),
+  language: (code) => request("/language", { method: "POST", body: JSON.stringify({ values: { language: code } }) }),
 };

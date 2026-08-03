@@ -1,13 +1,14 @@
 import logging
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from backend.app.auth import PasswordHasher
 from backend.app.media import MediaService
 from backend.app.core import Settings
 from backend.app.database import Database
-from backend.app.repositories import ActivityRepository, UserRepository
+from backend.app.repositories import ActivityRepository, SessionRepository, UserRepository
 from backend.app.scanner import LibraryScanner
 
 
@@ -97,6 +98,21 @@ class FoundationTests(unittest.TestCase):
         serialized = str(public)
         self.assertNotIn("/private/media", serialized)
         self.assertEqual(public["anime"][0]["seasons"][0]["episodes"][0]["id"], "show-s01-e01")
+
+    def test_expired_sessions_are_cleaned_up(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Database(Path(directory) / "database.db")
+            database.initialize()
+            with database.connect() as connection:
+                user = UserRepository(connection).create("mochi", "hash", "mochi")
+                sessions = SessionRepository(connection)
+                past = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+                future = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+                sessions.create("expired-session", user["id"], past)
+                sessions.create("active-session", user["id"], future)
+                sessions.delete_expired()
+                self.assertIsNone(sessions.get_user("expired-session"))
+                self.assertIsNotNone(sessions.get_user("active-session"))
 
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -9,7 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from .auth import current_user, require_mochi
-from .core import AuthenticationError, AuthorizationError, HibikiError
+from .core import AuthenticationError, AuthorizationError
 from .media import MediaService
 from .repositories import ActivityRepository, UserRepository
 
@@ -265,7 +264,10 @@ def languages():
 
 @router.post("/language")
 def language(payload: SettingsPayload, request: Request, user: Annotated[dict, Depends(current_user)]):
-    values = {"language": payload.values.get("language", "hi")}
+    selected = payload.values.get("language", "hi")
+    if selected not in {"hi", "en", "ja"}:
+        raise HTTPException(status_code=422, detail="Unsupported language")
+    values = {"language": selected}
     with request.app.state.database.connect() as db:
         ActivityRepository(db).save_settings(user["id"], values)
     return success(values)

@@ -227,6 +227,19 @@ function showApplication() {
   window.scrollTo(0, 0);
 }
 
+async function applyStoredSettings() {
+  if (!state.authenticated) return;
+  try {
+    const settings = await api.settings();
+    const saved = settings?.language;
+    if (saved && ["hi", "en", "ja"].includes(saved) && saved !== state.language) {
+      state.language = saved;
+      elements.language.value = saved;
+      await loadMessages(saved);
+    }
+  } catch { /* keep the current language */ }
+}
+
 async function submitLogin(event) {
   event.preventDefault();
   elements.loginError.hidden = true;
@@ -235,6 +248,8 @@ async function submitLogin(event) {
     await api.login({ username: form.get("username"), password: form.get("password") });
     state.authenticated = true;
     elements.loginDialog.close();
+    await applyStoredSettings();
+    renderLibrary();
     await refreshActivity();
   } catch (error) { elements.loginError.textContent = error.message; elements.loginError.hidden = false; }
 }
@@ -242,8 +257,11 @@ async function submitLogin(event) {
 async function scanLibrary() {
   if (!state.authenticated) { elements.loginDialog.showModal(); return; }
   elements.scanStatus.textContent = "Scanning…";
-  try { await refreshLibrary(); elements.scanStatus.textContent = "Scan complete"; }
-  catch (error) { elements.scanStatus.textContent = error.message; }
+  try {
+    await api.scan();
+    await refreshLibrary();
+    elements.scanStatus.textContent = "Scan complete";
+  } catch (error) { elements.scanStatus.textContent = error.message; }
 }
 
 document.querySelector("#enter-library").addEventListener("click", openApplication);
@@ -256,9 +274,15 @@ document.querySelector("#about-close").addEventListener("click", () => elements.
 elements.loginForm.addEventListener("submit", submitLogin);
 document.querySelector("#scan-library").addEventListener("click", scanLibrary);
 elements.search.addEventListener("input", (event) => refreshLibrary(event.target.value));
-elements.language.addEventListener("change", async (event) => { state.language = event.target.value; await loadMessages(state.language); renderLibrary(); });
+elements.language.addEventListener("change", async (event) => {
+  state.language = event.target.value;
+  await loadMessages(state.language);
+  renderLibrary();
+  if (state.authenticated) api.language(state.language).catch(() => {});
+});
 elements.historyClear.addEventListener("click", async () => { await api.clearHistory(); await refreshActivity(); });
 
 await loadMessages(state.language);
 try { state.authenticated = Boolean(await api.session()); } catch { state.authenticated = false; }
+await applyStoredSettings();
 await refreshLibrary();

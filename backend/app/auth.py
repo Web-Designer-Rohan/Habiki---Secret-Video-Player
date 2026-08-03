@@ -65,6 +65,7 @@ class AuthService:
             session_id = secrets.token_urlsafe(32)
             expires_at = datetime.now(timezone.utc) + timedelta(days=self.settings.session_days)
             SessionRepository(connection).create(session_id, user["id"], expires_at.isoformat())
+            SessionRepository(connection).delete_expired()
             return session_id
 
     def logout(self, session_id: str | None) -> None:
