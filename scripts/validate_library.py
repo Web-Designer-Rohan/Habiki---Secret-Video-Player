@@ -49,6 +49,7 @@ EPISODE_ID_PATTERN = re.compile(r"^[a-z0-9-]+-s\d{2}-e\d{2}$")
 
 from content import ContentManifest, parse_content  # noqa: E402
 from build_library import build_library  # noqa: E402
+from backend.app.maintenance import prune_dangling_references  # noqa: E402
 from backend.app.scanner import slugify  # noqa: E402
 
 
@@ -259,32 +260,10 @@ def check_database(findings: Findings, library: dict | None) -> None:
         if foreign_key_violations:
             findings.error(f"data/database.db: {len(foreign_key_violations)} foreign key violations")
 
-        anime_ids = {anime["id"] for anime in (library or {}).get("anime", [])}
-        episode_ids = {
-            episode["id"]
-            for anime in (library or {}).get("anime", [])
-            for season in anime.get("seasons", [])
-            for episode in season.get("episodes", [])
-        }
-
         with connection:
-            for table, column in (("favorites", "anime_id"), ("continue_watching", "anime_id"), ("watch_history", "anime_id")):
-                if anime_ids:
-                    rows = connection.execute(
-                        f"SELECT id FROM {table} WHERE {column} NOT IN ({','.join('?' * len(anime_ids))})",
-                        tuple(anime_ids),
-                    ).fetchall()
-                else:
-                    rows = connection.execute(f"SELECT id FROM {table}").fetchall()
-                for row in rows:
-                    connection.execute(f"DELETE FROM {table} WHERE id = ?", (row["id"],))
-                    findings.repaired(f"data/database.db: pruned dangling {table} row {row['id']}")
-
-            for table in ("continue_watching", "watch_history"):
-                for row in connection.execute(f"SELECT id, episode_id FROM {table}").fetchall():
-                    if row["episode_id"] not in episode_ids:
-                        connection.execute(f"DELETE FROM {table} WHERE id = ?", (row["id"],))
-                        findings.repaired(f"data/database.db: pruned dangling {table} row {row['id']}")
+            repairs = prune_dangling_references(connection, library or {"version": 1, "anime": []})
+            for repair in repairs:
+                findings.repaired(f"data/database.db: {repair}")
         print("  database: integrity ok, schema present")
     except sqlite3.Error as error:
         findings.error(f"data/database.db: validation failed ({error})")

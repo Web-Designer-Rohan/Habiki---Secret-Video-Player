@@ -6,10 +6,60 @@ from typing import Any
 from fastapi import HTTPException
 
 from .core import Settings
-from .scanner import LibraryScanner
+from .scanner import IMAGE_EXTENSIONS, LibraryScanner
 
 
 MEDIA_TYPES = {".mp4": "video/mp4", ".vtt": "text/vtt"}
+
+
+def filter_library(library_data: dict[str, Any], query: str = "", filter_by: str = "all", sort_by: str = "default") -> dict[str, Any]:
+    """Search, filter, and sort the public library in one pass.
+
+    - ``query`` matches anime titles, episode titles/numbers, season numbers, and
+      tutorial titles (case-insensitive).
+    - ``filter_by`` is one of "all", "series", "tutorials".
+    - ``sort_by`` is "default" (manifest order), "title", or "recent"
+      (reverse manifest order: newest imported entries first).
+
+    Pure function so it can be unit tested without a server.
+    """
+    anime_list = list(library_data.get("anime", []))
+    normalized = query.casefold().strip()
+
+    if filter_by == "series":
+        anime_list = [entry for entry in anime_list if entry.get("seasons")]
+    elif filter_by == "tutorials":
+        anime_list = [entry for entry in anime_list if not entry.get("seasons")]
+
+    if normalized:
+        matched: list[dict[str, Any]] = []
+        for entry in anime_list:
+            if normalized in entry.get("title", "").casefold():
+                matched.append(entry)
+                continue
+            matched_seasons: list[dict[str, Any]] = []
+            for season in entry.get("seasons", []):
+                season_number = season.get("number")
+                if normalized == str(season_number) or normalized == f"s{int(season_number):02d}":
+                    matched_seasons.append(season)
+                    continue
+                hits = [
+                    episode for episode in season.get("episodes", [])
+                    if normalized in episode.get("title", "").casefold()
+                    or str(episode.get("number", "")) == normalized
+                ]
+                if hits:
+                    matched_seasons.append({**season, "episodes": hits})
+            if matched_seasons:
+                matched.append({**entry, "seasons": matched_seasons})
+        anime_list = matched
+
+    if sort_by == "title":
+        anime_list = sorted(anime_list, key=lambda entry: entry.get("title", "").casefold())
+    elif sort_by == "recent":
+        anime_list = list(reversed(anime_list))
+
+    return {**library_data, "anime": anime_list}
 
 
 class MediaService:
@@ -64,3 +114,28 @@ class MediaService:
     def media_type(self, path: str) -> str:
         candidate = self.validated_path(path)
         return MEDIA_TYPES[candidate.suffix.lower()]
+
+    def poster_path(self, anime_id: str) -> Path | None:
+        """Return the indexed poster for an anime after root validation, or None."""
+        for entry in self.scanner.library().get("anime", []):
+            if entry.get("id") == anime_id:
+                poster = entry.get("poster")
+                if not poster:
+                    return None
+                try:
+                    candidate = self.validated_path(poster, allowed_extensions=set(IMAGE_EXTENSIONS))
+                except HTTPException:
+                    return None
+                return candidate if candidate.is_file() else None
+        return None
+
+    @staticmethod
+    def banner_list(assets_dir: Path) -> list[dict[str, str]]:
+        """List application banners as public asset URLs for the welcome screen."""
+        directory = assets_dir / "banners"
+        if not directory.is_dir():
+            return []
+        return [
+            {"name": path.name, "url": f"/assets/banners/{path.name}"}
+            for path in sorted(directory.glob("*.jpg"))
+        ]

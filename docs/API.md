@@ -191,15 +191,14 @@ GET
 
 /library/search
 
-Search the local library.
+Search, filter, and sort the local library in a single call.
 
 Supported parameters:
 
-- query
-- genre (future)
-- sort
-- page
-- limit
+- query — matches anime titles, episode titles/numbers, season numbers, and tutorial titles (case-insensitive)
+- filter — `all` (default), `series`, `tutorials`
+- sort — `default` (manifest order), `recent` (newest first), `title` (A–Z)
+- genre / page / limit (future)
 
 ---
 
@@ -261,6 +260,26 @@ Remove an item from Continue Watching.
 
 ---
 
+Banners
+
+GET
+
+/banners
+
+Return the application banner collection as public asset URLs (decorative; no authentication).
+
+---
+
+Posters
+
+GET
+
+/library/{animeId}/poster
+
+Serve an indexed poster image after root validation (D-015). Returns 404 when the anime has no indexed poster.
+
+---
+
 Favorites
 
 GET
@@ -317,6 +336,70 @@ Return dashboard information.
 
 ---
 
+GET
+
+/dashboard/status
+
+Return library and system statistics (series, tutorials, episodes, users, posters, banners, database size).
+
+---
+
+GET
+
+/dashboard/config
+
+Return the current application configuration (library paths, language).
+
+---
+
+POST
+
+/dashboard/config
+
+Update application configuration (library paths, language).
+
+---
+
+GET
+
+/dashboard/library
+
+Return the raw library metadata including local paths (administrator management only; paths never cross the public API boundary).
+
+---
+
+PATCH
+
+/dashboard/anime/{animeId}
+
+Edit anime metadata (title, description, poster, banner). Poster and banner paths are resolved against the configured library roots and validated.
+
+---
+
+PATCH
+
+/dashboard/episode/{episodeId}
+
+Edit an episode title.
+
+---
+
+GET / PUT
+
+/dashboard/localization/{code}
+
+Read or merge localization values for `hi`, `en`, or `ja`.
+
+---
+
+POST
+
+/dashboard/database/refresh
+
+Run a database integrity check, foreign-key check, and prune dangling anime/episode references.
+
+---
+
 POST
 
 /dashboard/library/scan
@@ -329,15 +412,7 @@ POST
 
 /dashboard/thumbnails
 
-Generate missing thumbnails.
-
----
-
-POST
-
-/dashboard/config
-
-Update configuration.
+Generate missing thumbnails. Currently returns guidance to run scripts/generate_thumbnails.py; generated thumbnails are discovered by the scanner.
 
 ---
 

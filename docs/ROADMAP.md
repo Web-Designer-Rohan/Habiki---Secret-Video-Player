@@ -53,7 +53,11 @@ Progress
 - ✅ Frontend shell and custom player foundation implemented
 - ✅ Activity-driven player and library UI integration
 - ✅ Season and episode browsing in the library UI
-- ⏳ Dashboard management, metadata editing, and thumbnail generation
+- ✅ Library search, filters, and sorting
+- ✅ Dashboard management, metadata editing, and localization editor
+- ✅ Teacher Mode and Settings
+- ✅ Welcome experience (random banner, swipe-up)
+- ⏳ In-app thumbnail generation (available via scripts/generate_thumbnails.py; dashboard endpoint returns guidance until FFmpeg-based generation is wired)
 
 ---
 

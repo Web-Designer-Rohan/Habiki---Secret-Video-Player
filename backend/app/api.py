@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -11,6 +12,7 @@ from .auth import current_user, require_mochi
 from .core import AuthenticationError
 from .media import MediaService
 from .repositories import ActivityRepository, UserRepository
+from .scanner import IMAGE_EXTENSIONS
 
 
 class LoginPayload(BaseModel):
@@ -44,6 +46,21 @@ class SettingsPayload(BaseModel):
 class ConfigPayload(BaseModel):
     library_paths: list[str] = Field(default_factory=list)
     language: str = Field(default="hi", pattern=r"^(hi|en|ja)$")
+
+
+class AnimeEditPayload(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    poster: str | None = Field(default=None, max_length=500)
+    banner: str | None = Field(default=None, max_length=500)
+
+
+class EpisodeEditPayload(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+
+
+class LocalizationPayload(BaseModel):
+    values: dict[str, str]
 
 
 def success(data: Any) -> dict[str, Any]:
@@ -128,13 +145,12 @@ def library(request: Request):
 
 
 @router.get("/library/search")
-def search_library(request: Request, query: str = ""):
-    library_data = request.app.state.media.library()
-    normalized = query.casefold().strip()
-    if not normalized:
-        return success(library_data)
-    library_data["anime"] = [anime for anime in library_data.get("anime", []) if normalized in anime["title"].casefold()]
-    return success(library_data)
+def search_library(request: Request, query: str = "", filter: str = "all", sort: str = "default"):
+    """Search by title, episode, season, or tutorial; filter series/tutorials; sort."""
+    if filter not in {"all", "series", "tutorials"} or sort not in {"default", "title", "recent"}:
+        raise HTTPException(status_code=422, detail="Unsupported filter or sort value")
+    from .media import filter_library
+    return success(filter_library(request.app.state.media.library(), query=query, filter_by=filter, sort_by=sort))
 
 
 @router.get("/library/{anime_id}")
@@ -154,6 +170,22 @@ def seasons(anime_id: str, request: Request):
 def episodes(anime_id: str, request: Request):
     season_list = seasons(anime_id, request)["data"]
     return success([episode for season in season_list for episode in season.get("episodes", [])])
+
+
+@router.get("/library/{anime_id}/poster")
+def poster(anime_id: str, request: Request):
+    """Serve an indexed poster image after root validation (D-015)."""
+    candidate = request.app.state.media.poster_path(anime_id)
+    if candidate is None:
+        raise HTTPException(status_code=404, detail="Poster not available")
+    return FileResponse(candidate, media_type="image/webp" if candidate.suffix.lower() == ".webp" else "image/jpeg",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/banners")
+def banners(request: Request):
+    """List application banners (decorative, no authentication)."""
+    return success({"banners": request.app.state.media.banner_list(request.app.state.settings.project_root / "assets")})
 
 
 def indexed_episode(request: Request, episode_id: str) -> dict:
@@ -289,6 +321,122 @@ def dashboard(_: Annotated[dict, Depends(require_mochi)]):
     return success({"available": True})
 
 
+@router.get("/dashboard/status")
+def dashboard_status(request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    settings = request.app.state.settings
+    library = request.app.state.media.scanner.library()
+    anime = library.get("anime", [])
+    series = [entry for entry in anime if entry.get("seasons")]
+    tutorials = [entry for entry in anime if not entry.get("seasons")]
+    episodes = sum(len(season.get("episodes", [])) for entry in anime for season in entry.get("seasons", []))
+    with request.app.state.database.connect() as db:
+        users = UserRepository(db).count()
+    banner_dir = settings.project_root / "assets" / "banners"
+    return success({
+        "series": len(series),
+        "tutorials": len(tutorials),
+        "episodes": episodes,
+        "users": users,
+        "posters": sum(1 for entry in anime if entry.get("poster")),
+        "banners": len(list(banner_dir.glob("*.jpg"))) if banner_dir.is_dir() else 0,
+        "database_size": settings.database_path.stat().st_size if settings.database_path.exists() else 0,
+    })
+
+
+def resolve_admin_asset_path(request: Request, value: str, anime_folder: str | None) -> str:
+    """Resolve an admin-supplied poster/banner path and validate it stays in the library."""
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        base = Path(anime_folder) if anime_folder else request.app.state.settings.media_dir
+        candidate = base / candidate
+    candidate = candidate.resolve()
+    roots = request.app.state.settings.library_roots()
+    if not any(candidate == root or root in candidate.parents for root in roots):
+        raise HTTPException(status_code=422, detail="Path is outside the configured library folders")
+    if not candidate.is_file():
+        raise HTTPException(status_code=404, detail="Referenced image file not found")
+    if candidate.suffix.lower() not in IMAGE_EXTENSIONS:
+        raise HTTPException(status_code=422, detail="Unsupported image format")
+    return str(candidate)
+
+
+def save_library(request: Request, library: dict) -> None:
+    from .core import write_json
+    write_json(request.app.state.settings.library_path, library)
+
+
+@router.patch("/dashboard/anime/{anime_id}")
+def edit_anime(anime_id: str, payload: AnimeEditPayload, request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    from .core import read_json
+    library = read_json(request.app.state.settings.library_path, {"version": 1, "anime": []})
+    for entry in library.get("anime", []):
+        if entry.get("id") != anime_id:
+            continue
+        if payload.title is not None:
+            entry["title"] = payload.title
+        if payload.description is not None:
+            entry["description"] = payload.description
+        if payload.poster is not None:
+            entry["poster"] = resolve_admin_asset_path(request, payload.poster, entry.get("path")) if payload.poster.strip() else None
+        if payload.banner is not None:
+            entry["banner"] = resolve_admin_asset_path(request, payload.banner, entry.get("path")) if payload.banner.strip() else None
+        save_library(request, library)
+        return success(entry)
+    raise HTTPException(status_code=404, detail="Anime not found")
+
+
+@router.patch("/dashboard/episode/{episode_id}")
+def edit_episode(episode_id: str, payload: EpisodeEditPayload, request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    from .core import read_json
+    library = read_json(request.app.state.settings.library_path, {"version": 1, "anime": []})
+    for entry in library.get("anime", []):
+        for season in entry.get("seasons", []):
+            for episode in season.get("episodes", []):
+                if episode.get("id") == episode_id:
+                    if payload.title is not None:
+                        episode["title"] = payload.title
+                    save_library(request, library)
+                    return success(episode)
+    raise HTTPException(status_code=404, detail="Episode not found")
+
+
+@router.get("/dashboard/localization/{code}")
+def get_localization(code: str, request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    if code not in {"hi", "en", "ja"}:
+        raise HTTPException(status_code=422, detail="Unsupported language")
+    from .core import read_json
+    path = request.app.state.settings.data_dir / "localization" / f"{code}.json"
+    return success(read_json(path, {}))
+
+
+@router.put("/dashboard/localization/{code}")
+def put_localization(code: str, payload: LocalizationPayload, request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    if code not in {"hi", "en", "ja"}:
+        raise HTTPException(status_code=422, detail="Unsupported language")
+    from .core import read_json, write_json
+    path = request.app.state.settings.data_dir / "localization" / f"{code}.json"
+    current = read_json(path, {})
+    current.update(payload.values)
+    write_json(path, current)
+    return success({"code": code, "keys": len(current)})
+
+
+@router.post("/dashboard/database/refresh")
+def refresh_database(request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    from .maintenance import prune_dangling_references
+    library = request.app.state.media.scanner.library()
+    with request.app.state.database.connect() as db:
+        integrity = db.execute("PRAGMA integrity_check").fetchone()[0]
+        violations = db.execute("PRAGMA foreign_key_check").fetchall()
+        repairs = prune_dangling_references(db, library)
+    return success({
+        "integrity": integrity,
+        "foreign_key_violations": len(violations),
+        "pruned": len(repairs),
+        "repairs": repairs,
+    })
+
+
 @router.post("/dashboard/library/scan")
 def scan(request: Request, _: Annotated[dict, Depends(require_mochi)]):
     return success(request.app.state.media.scan())
@@ -297,6 +445,19 @@ def scan(request: Request, _: Annotated[dict, Depends(require_mochi)]):
 @router.post("/dashboard/library/reload")
 def reload_library(request: Request, _: Annotated[dict, Depends(require_mochi)]):
     return success(request.app.state.media.scan())
+
+
+@router.get("/dashboard/config")
+def get_config(request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    settings = request.app.state.settings
+    return success({"library_paths": settings.library_paths, "language": settings.default_language})
+
+
+@router.get("/dashboard/library")
+def dashboard_library(request: Request, _: Annotated[dict, Depends(require_mochi)]):
+    """Raw library metadata (with paths) for administrator management only."""
+    from .core import read_json
+    return success(read_json(request.app.state.settings.library_path, {"version": 1, "anime": []}))
 
 
 @router.post("/dashboard/config")

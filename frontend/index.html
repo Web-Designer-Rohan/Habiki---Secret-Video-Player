@@ -11,7 +11,7 @@
 <body>
   <div class="app-noise" aria-hidden="true"></div>
   <section class="welcome" id="welcome" aria-labelledby="welcome-title">
-    <div class="welcome__backdrop" aria-hidden="true"></div>
+    <div class="welcome__backdrop" id="welcome-backdrop" aria-hidden="true"></div>
     <div class="welcome__content">
       <p class="eyebrow" data-i18n="welcome_kicker">ऑफ़लाइन / निजी / आपकी</p>
       <h1 id="welcome-title" class="display-title" data-i18n="welcome_title">Hibiki</h1>
@@ -32,8 +32,11 @@
       <p class="topbar__tagline" data-i18n="brand_tagline">आपकी स्थानीय लाइब्रेरी, आपके ध्यान में।</p>
       <div class="topbar__actions">
         <label class="language-select"><span class="sr-only" data-i18n="language">भाषा</span><select id="language-select" aria-label="Language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select></label>
+        <button class="icon-button" id="teacher-open" type="button" title="Reading mode" aria-label="Reading mode">T</button>
+        <button class="icon-button" id="settings-open" type="button" title="Settings" aria-label="Settings">⚙</button>
         <button class="icon-button" id="about-open" type="button" title="About Hibiki" aria-label="About Hibiki">i</button>
         <button class="icon-button" id="login-open" type="button" title="Sign in" aria-label="Sign in">↗</button>
+        <button class="icon-button" id="logout-open" type="button" title="Sign out" aria-label="Sign out" hidden>↩</button>
       </div>
     </header>
 
@@ -63,12 +66,15 @@
             <div class="player__loading" id="player-loading" hidden>Loading</div>
             <div class="player__error" id="player-error" hidden role="alert">This episode could not be played.</div>
             <div class="player__controls" id="player-controls">
+              <button class="player__control" id="prev-episode" type="button" aria-label="Previous episode">⏮</button>
               <button class="player__control" id="play-toggle" type="button" aria-label="Play">▶</button>
+              <button class="player__control" id="next-episode" type="button" aria-label="Next episode">⏭</button>
               <input class="player__timeline" id="timeline" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position">
               <span class="player__time" id="time-display">00:00 / 00:00</span>
               <button class="player__control" id="mute-toggle" type="button" aria-label="Volume">◖</button>
               <input class="player__volume" id="volume" type="range" min="0" max="1" value="1" step="0.05" aria-label="Volume">
               <select class="player__subtitle" id="subtitle" aria-label="Subtitles"><option value="">Subtitles off</option></select>
+              <select class="player__audio" id="audio-track" aria-label="Audio" hidden></select>
               <select class="player__speed" id="speed" aria-label="Playback speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
               <button class="player__control" id="fullscreen-toggle" type="button" aria-label="Fullscreen">⛶</button>
             </div>
@@ -77,6 +83,14 @@
 
         <section class="library-section" id="library" aria-labelledby="library-heading">
           <div class="section-heading"><div><p class="eyebrow">Collection / 01</p><h3 id="library-heading" data-i18n="library">लाइब्रेरी</h3></div><label class="search"><span class="sr-only" data-i18n="search">अपनी लाइब्रेरी खोजें</span><input id="library-search" type="search" data-i18n-placeholder="search" placeholder="अपनी लाइब्रेरी खोजें"><span>⌕</span></label></div>
+          <div class="library-tools">
+            <div class="filter-pills" id="library-filters" role="group" aria-label="Library filters">
+              <button class="filter-pill is-active" type="button" data-filter="all" data-i18n="filter_all">All</button>
+              <button class="filter-pill" type="button" data-filter="series" data-i18n="filter_series">Series</button>
+              <button class="filter-pill" type="button" data-filter="tutorials" data-i18n="filter_tutorials">Tutorials</button>
+            </div>
+            <label class="sort-select"><span class="sr-only">Sort</span><select id="library-sort" aria-label="Sort"><option value="default" data-i18n="sort_default">Order added</option><option value="recent" data-i18n="sort_recent">Recently added</option><option value="title" data-i18n="sort_title">Title A–Z</option></select></label>
+          </div>
           <div class="library-grid" id="library-grid"></div>
           <div class="empty-state" id="library-empty"><span class="empty-state__number">—</span><div><h4 data-i18n="empty_library">आपकी लाइब्रेरी तैयार है।</h4><p data-i18n="empty_library_hint">एक Anime फ़ोल्डर जोड़ें, फिर डैशबोर्ड से स्कैन करें।</p></div></div>
         </section>
@@ -87,9 +101,29 @@
           <section class="compact-section" id="history" aria-labelledby="history-heading"><div class="section-heading"><h3 id="history-heading">History</h3><span class="section-heading__index">04</span></div><div class="activity-list" id="history-list"></div><div class="empty-mini" id="history-empty">Finished episodes appear here.</div><button class="button button--line activity-clear" id="history-clear" type="button" hidden>Clear history</button></section>
         </section>
 
-        <section class="admin-grid" id="dashboard">
-          <article class="admin-card"><p class="eyebrow">05 / private room</p><h3 data-i18n="dashboard">डैशबोर्ड</h3><p>Scan local media, maintain metadata, and keep the library in order.</p><button class="button button--line" id="scan-library" type="button">Scan library ↗</button><span class="admin-card__status" id="scan-status"></span></article>
-          <article class="admin-card" id="settings"><p class="eyebrow">05 / preferences</p><h3 data-i18n="settings">सेटिंग्स</h3><p>Language and playback preferences stay on this device.</p></article>
+        <section class="dashboard-view" id="dashboard">
+          <div class="section-heading"><div><p class="eyebrow">05 / private room</p><h3 data-i18n="dashboard">डैशबोर्ड</h3></div><div class="dashboard-tools"><button class="button button--line" id="scan-library" type="button" data-i18n="dashboard_scan">Scan library</button><button class="button button--line" id="dash-refresh-db" type="button" data-i18n="dashboard_refresh_db">Refresh database</button><span class="admin-card__status" id="scan-status"></span></div></div>
+          <div class="dashboard-stats" id="dash-stats" hidden></div>
+          <div class="dashboard-locked" id="dash-locked" hidden><p id="dash-message" data-i18n="dashboard_need_login">Sign in as administrator to manage the library.</p><button class="button button--primary" id="dash-login" type="button" data-i18n="sign_in">Sign in</button></div>
+          <section class="dash-panel" id="dash-manage" hidden>
+            <div class="section-heading"><div><p class="eyebrow">05 / management</p><h4 data-i18n="dashboard_management">Library management</h4></div><span class="section-heading__index">05 / 01</span></div>
+            <div class="manage-list" id="dash-library"></div>
+          </section>
+          <section class="dash-panel" id="dash-localization-panel" hidden>
+            <div class="section-heading"><div><p class="eyebrow">05 / localization</p><h4 data-i18n="dashboard_localization">Localization editor</h4></div><span class="section-heading__index">05 / 02</span></div>
+            <div class="loc-tabs" id="dash-loc-tabs"></div>
+            <div class="loc-editor" id="dash-localization"></div>
+          </section>
+          <section class="dash-panel" id="dash-users-panel" hidden>
+            <div class="section-heading"><div><p class="eyebrow">05 / users</p><h4 data-i18n="user_list">Local users</h4></div><span class="section-heading__index">05 / 03</span></div>
+            <div class="user-list" id="dash-users"></div>
+            <form class="user-create" id="user-form">
+              <input id="user-username" name="username" required maxlength="80" autocomplete="off" placeholder="Username" aria-label="Username">
+              <input id="user-password" name="password" required type="password" minlength="12" autocomplete="new-password" placeholder="Password (min 12 characters)" aria-label="Password">
+              <select id="user-role" aria-label="Role"><option value="e-mochi">E-Mochi</option><option value="mochi">Mochi</option></select>
+              <button class="button button--primary" type="submit" data-i18n="user_create">Create user</button>
+            </form>
+          </section>
         </section>
         <footer class="footer"><span>Hibiki / v0.2.0 · AGPL-3.0-or-later</span><span>Local-first / offline by design</span><nav class="footer__links" aria-label="Legal and project links"><button class="footer__link" id="about-footer" type="button">About</button><a class="footer__link" href="/frontend/legal.html">Legal</a><a class="footer__link" href="/frontend/privacy.html">Privacy</a><a class="footer__link" href="/frontend/attribution.html">Attribution</a><a class="footer__link" href="/LICENSE">License</a><a class="footer__link" href="https://github.com/Web-Designer-Rohan/Habiki---Secret-Video-Player" rel="noopener noreferrer">GitHub</a></nav></footer>
       </div>
@@ -98,6 +132,62 @@
 
   <dialog class="modal" id="login-dialog" aria-labelledby="login-title"><form class="modal__form" id="login-form" method="dialog"><button class="modal__close" id="login-close" type="button" aria-label="Close">×</button><p class="eyebrow">Private access</p><h2 id="login-title">Sign in</h2><p class="modal__hint">Use your local Mochi account to access administration.</p><label><span data-i18n="username">Username</span><input id="username" name="username" required autocomplete="username"></label><label><span data-i18n="password">Password</span><input id="password" name="password" required type="password" autocomplete="current-password"></label><p class="form-error" id="login-error" role="alert" hidden></p><button class="button button--primary" type="submit" data-i18n="sign_in">Sign in</button></form></dialog>
   <dialog class="modal about-dialog" id="about-dialog" aria-labelledby="about-title"><div class="modal__form"><button class="modal__close" id="about-close" type="button" aria-label="Close">×</button><p class="eyebrow">Hibiki / about</p><h2 id="about-title">About Hibiki</h2><p class="modal__hint">A private, local-first library for the stories you keep close.</p><div class="about-dialog__badges"><span class="badge">Local-first</span><span class="badge">Offline</span></div><dl class="about-dialog__details"><div><dt>Version</dt><dd>v0.2.0</dd></div><div><dt>Build date</dt><dd>2026-08-02</dd></div><div><dt>License</dt><dd><a href="/LICENSE">AGPL-3.0-or-later</a></dd></div><div><dt>Credits</dt><dd><a href="/frontend/attribution.html">Open-source contributors</a></dd></div></dl><div class="about-dialog__actions"><a class="button button--line" href="/frontend/legal.html">Legal notice ↗</a><a class="button button--line" href="/frontend/privacy.html">Privacy ↗</a></div></div></dialog>
+  <dialog class="modal settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
+    <form class="modal__form" id="settings-form" method="dialog">
+      <button class="modal__close" id="settings-close" type="button" aria-label="Close">×</button>
+      <p class="eyebrow">Hibiki / preferences</p>
+      <h2 id="settings-title" data-i18n="settings">सेटिंग्स</h2>
+      <section class="settings-group">
+        <h3 data-i18n="settings_language">Language</h3>
+        <select id="set-language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_theme">Theme</h3>
+        <select id="set-theme"><option value="dark" data-i18n="settings_theme_dark">Dark (charcoal)</option></select>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_playback">Playback</h3>
+        <label class="settings-row"><span data-i18n="settings_default_volume">Default volume</span><input id="set-volume" type="range" min="0" max="100" step="5"></label>
+        <label class="settings-row"><span data-i18n="settings_default_speed">Default speed</span><select id="set-speed"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+        <label class="settings-row"><span data-i18n="settings_subtitles_default">Subtitles on by default</span><input id="set-subtitles" type="checkbox"></label>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_animation">Animation</h3>
+        <label class="settings-row"><span data-i18n="settings_reduce_motion">Reduce motion</span><input id="set-reduce-motion" type="checkbox"></label>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_welcome">Welcome screen</h3>
+        <select id="set-welcome"><option value="always" data-i18n="settings_welcome_always">Show on every launch</option><option value="once" data-i18n="settings_welcome_once">Show once per session</option></select>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_teacher_shortcut">Reading mode shortcut</h3>
+        <select id="set-teacher-key"><option value="KeyT">T</option><option value="F2">F2</option><option value="none">—</option></select>
+      </section>
+      <section class="settings-group">
+        <h3 data-i18n="settings_reading_page">Reading page (optional URL)</h3>
+        <input id="set-reading-page" type="url" placeholder="https://…">
+      </section>
+      <section class="settings-group" id="settings-media" hidden>
+        <h3 data-i18n="settings_media_folders">Media folders</h3>
+        <p class="modal__hint" data-i18n="settings_media_folders_hint">One folder per line.</p>
+        <textarea id="set-media-folders" rows="3"></textarea>
+      </section>
+      <p class="form-error" id="settings-error" role="alert" hidden></p>
+      <p class="form-status" id="settings-status" hidden></p>
+      <button class="button button--primary" type="submit" data-i18n="settings_save">Save settings</button>
+    </form>
+  </dialog>
+  <section class="teacher" id="teacher" hidden aria-label="Reading mode">
+    <header class="teacher__bar">
+      <p class="teacher__kicker" id="teacher-kicker">Reading mode</p>
+      <button class="button button--line teacher__exit" id="teacher-exit" type="button">Exit reading mode</button>
+    </header>
+    <main class="teacher__page">
+      <p class="teacher__meta" id="teacher-meta"></p>
+      <h1 class="teacher__title" id="teacher-title">Hibiki</h1>
+      <div class="teacher__body" id="teacher-body"></div>
+    </main>
+  </section>
   <script src="/assets/vendor/anime/anime.umd.min.js"></script>
   <script type="module" src="/frontend/js/main.js"></script>
 </body>
