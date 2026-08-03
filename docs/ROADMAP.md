@@ -35,7 +35,7 @@ Current Status
 
 Current Phase
 
-Foundation implementation and library experience
+Release 1.0 — filesystem library integrated and published
 
 Progress
 
@@ -47,17 +47,18 @@ Progress
 - ✅ Database strategy defined
 - ✅ Engineering guidelines completed
 - ✅ Backend foundation implemented
-- ✅ Local authentication and roles implemented
-- ✅ Media scanner and versioned library JSON implemented
+- ✅ Single-password local authentication implemented
+- ✅ Filesystem library scanner implemented (Anime/Movies/Tutorials/Other categories, posters, banners, subtitles, info.json metadata)
+- ✅ Deterministic, incremental, non-blocking library scans with warnings
 - ✅ Versioned REST API foundation implemented
 - ✅ Frontend shell and custom player foundation implemented
 - ✅ Activity-driven player and library UI integration
 - ✅ Season and episode browsing in the library UI
-- ✅ Library search, filters, and sorting
-- ✅ Dashboard management, metadata editing, and localization editor
-- ✅ Teacher Mode and Settings
+- ✅ Library search, category filters, and sorting
+- ✅ Dashboard management and metadata editing (persisted to info.json)
+- ✅ Teacher Mode and Settings (media root configuration)
 - ✅ Welcome experience (random banner, swipe-up)
-- ⏳ In-app thumbnail generation (available via scripts/generate_thumbnails.py; dashboard endpoint returns guidance until FFmpeg-based generation is wired)
+- ⏳ In-app thumbnail generation (available via scripts/generate_thumbnails.py; dashboard endpoint returns guidance until FFmpeg-based generation is wired in-app)
 
 ---
 
@@ -102,7 +103,6 @@ User Features
 - Watch history
 - Continue Watching
 - Recently watched
-- Localization
 - Settings
 
 Dashboard
@@ -169,7 +169,6 @@ Possible features:
 - Multiple media libraries
 - Enhanced user profiles
 - Advanced dashboard
-- Additional localization
 - Improved customization
 
 Only features that align with Hibiki's philosophy should be considered.

@@ -25,6 +25,7 @@ env/
 
 # Local runtime state
 data/cache/
+data/library.json
 data/*.db
 data/*.db-journal
 data/*.db-shm
@@ -37,6 +38,7 @@ logs/
 
 # User media and generated files
 media/**
+contents/**
 *.tmp
 
 # Environment configuration (secrets)

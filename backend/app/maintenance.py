@@ -17,12 +17,16 @@ def prune_dangling_references(connection: sqlite3.Connection, library: dict[str,
     Returns a list of human-readable repair descriptions (empty when healthy).
     Executes inside a single transaction.
     """
-    anime_ids = {anime["id"] for anime in library.get("anime", [])}
+    anime_ids = {anime["id"] for anime in library.get("entries", [])}
     episode_ids = {
         episode["id"]
-        for anime in library.get("anime", [])
+        for anime in library.get("entries", [])
         for season in anime.get("seasons", [])
         for episode in season.get("episodes", [])
+    } | {
+        episode["id"]
+        for anime in library.get("entries", [])
+        for episode in anime.get("episodes", [])
     }
     repairs: list[str] = []
 

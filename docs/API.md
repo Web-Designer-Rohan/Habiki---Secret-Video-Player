@@ -83,7 +83,31 @@ Code| Meaning
 404| Resource Not Found
 409| Conflict
 422| Validation Error
+429| Rate Limited
 500| Internal Server Error
+
+---
+
+Security
+
+Every response carries hardening headers:
+
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: SAMEORIGIN
+- Referrer-Policy: no-referrer
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- Content-Security-Policy: default-src 'self'; frame-src http: https: (Teacher Mode iframe)
+
+State-changing requests (POST / PUT / PATCH / DELETE) that include an Origin
+header are rejected with 403 CROSS_ORIGIN_DENIED unless the origin matches the
+Host header. Requests without an Origin header are unaffected.
+
+The login endpoint enforces a sliding-window rate limit: after 5 failed
+attempts per username and client address, further attempts return
+429 RATE_LIMITED until the oldest failure leaves the 15-minute window. A
+successful login resets the counter.
+
+Expired sessions are pruned at startup and on every login and logout.
 
 ---
 
@@ -159,7 +183,13 @@ GET
 
 /library
 
-Return the complete media library.
+Return the media library. Optional parameters:
+
+- query — matches entry titles, episode titles/numbers, and season numbers (case-insensitive)
+- category — `all` (default), `anime`, `movies`, `tutorials`, `other`
+- sort — `default` (canonical category order), `recent` (newest scanned first), `title` (A–Z)
+
+Unsupported category/sort values return 422. Local filesystem paths are never returned; episodes carry no file paths in the public payload.
 
 ---
 
@@ -167,7 +197,7 @@ GET
 
 /library/{animeId}
 
-Return information for a single anime.
+Return information for a single entry (anime, movie, tutorial, or other).
 
 ---
 
@@ -191,14 +221,7 @@ GET
 
 /library/search
 
-Search, filter, and sort the local library in a single call.
-
-Supported parameters:
-
-- query — matches anime titles, episode titles/numbers, season numbers, and tutorial titles (case-insensitive)
-- filter — `all` (default), `series`, `tutorials`
-- sort — `default` (manifest order), `recent` (newest first), `title` (A–Z)
-- genre / page / limit (future)
+Alias of GET /library; accepts the same query / category / sort parameters.
 
 ---
 
@@ -222,7 +245,7 @@ GET
 
 Return an indexed WebVTT subtitle file.
 
-Metadata-only placeholder episodes (created when media is not yet imported, see ASSETS.md) have no indexed file. For these, `/player/source` and `/player/file` return 404 with `Episode media is not available locally` until a library scan indexes real media.
+Metadata-only placeholder entries (created before media is scanned in, see ASSETS.md) have no indexed file. For these, `/player/source` and `/player/file` return 404 with `Episode media is not available locally` until a library scan indexes real media.
 
 ---
 
@@ -276,7 +299,15 @@ GET
 
 /library/{animeId}/poster
 
-Serve an indexed poster image after root validation (D-015). Returns 404 when the anime has no indexed poster.
+Serve an indexed poster image after root validation (D-015). Returns 404 when the entry has no indexed poster.
+
+---
+
+GET
+
+/library/{animeId}/banner
+
+Serve an indexed banner image after root validation. Returns 404 when the entry has no indexed banner.
 
 ---
 
@@ -340,7 +371,7 @@ GET
 
 /dashboard/status
 
-Return library and system statistics (series, tutorials, episodes, users, posters, banners, database size).
+Return library and system statistics (anime, movies, tutorials, other, episodes, posters, banners, database size).
 
 ---
 
@@ -348,7 +379,7 @@ GET
 
 /dashboard/config
 
-Return the current application configuration (library paths, language).
+Return the current application configuration (media_root).
 
 ---
 
@@ -356,7 +387,7 @@ POST
 
 /dashboard/config
 
-Update application configuration (library paths, language).
+Update the media root (a relative folder name or an absolute path; invalid values return 422). Persists to config.json and starts a background scan of the new root.
 
 ---
 
@@ -372,23 +403,7 @@ PATCH
 
 /dashboard/anime/{animeId}
 
-Edit anime metadata (title, description, poster, banner). Poster and banner paths are resolved against the configured library roots and validated.
-
----
-
-PATCH
-
-/dashboard/episode/{episodeId}
-
-Edit an episode title.
-
----
-
-GET / PUT
-
-/dashboard/localization/{code}
-
-Read or merge localization values for `hi`, `en`, or `ja`.
+Edit metadata (title, description, year, genre, studio). The edit is written to the title's `info.json` (the filesystem source of truth) and applied to the cached library immediately, so a rescan keeps it.
 
 ---
 
@@ -404,7 +419,15 @@ POST
 
 /dashboard/library/scan
 
-Run a library scan.
+Start a background library scan. Returns the scan state (`scanning`); it does not block. Poll GET /dashboard/scan/status until the state leaves `scanning`.
+
+---
+
+GET
+
+/dashboard/scan/status
+
+Return the current scan state: status (`idle` | `scanning` | `error`), started/finished timestamps, entry and episode counts, and up to 100 warnings (missing assets, invalid names, duplicate numbers, misplaced files). Warnings never fail the scan.
 
 ---
 
@@ -413,14 +436,6 @@ POST
 /dashboard/thumbnails
 
 Generate missing thumbnails. Currently returns guidance to run scripts/generate_thumbnails.py; generated thumbnails are discovered by the scanner.
-
----
-
-POST
-
-/dashboard/library/reload
-
-Reload the media library.
 
 ---
 
@@ -438,25 +453,7 @@ PUT
 
 /settings
 
-Update settings.
-
----
-
-Localization
-
-GET
-
-/languages
-
-Return available languages.
-
----
-
-POST
-
-/language
-
-Update the active language.
+Update settings. Unknown setting keys are silently dropped; only the allowed keys (`theme`, `default_volume`, `default_speed`, `subtitles_default`, `reduce_motion`, `welcome_screen`, `teacher_shortcut`, `reading_page`) are stored.
 
 ---
 

@@ -514,6 +514,34 @@ The project must keep `LICENSE`, `docs/ATTRIBUTION.md`, and `docs/ASSETS.md` syn
 
 ---
 
+D-017
+
+Date
+
+2026-08-03
+
+Status
+
+Accepted
+
+Category
+
+Library and Storage
+
+Decision
+
+Version 1 replaces the hand-maintained library with a filesystem-driven model. A single configurable media root (default `contents/`) organizes media into four automatic categories — Anime, Movies, Tutorials, Other. The scanner produces a deterministic library.json v2 cache (`entries` + `signatures` keyed by path → [mtime_ns, size]) and supports incremental rebuilds, background scanning with a status endpoint, and warning collection that never fails the scan. `info.json` sidecar files are the source of truth for title, description, year, genre, and studio metadata; edited metadata is written back to `info.json`. Standalone titles (Movies / Tutorials / Other) map to one video per title; Anime maps to seasons and episodes.
+
+Reason
+
+A configurable root folder plus naming conventions makes the library portable (relative to the project or absolute), removes the need to regenerate a library file after reorganizing files, and keeps media out of git. Path → signature caching makes rescanning cheap and deterministic. Warnings instead of failures keep first scans usable even with messy folders.
+
+Consequences
+
+`data/library.json` is now a disposable cache (safe to delete; regenerated on startup). API responses continue to strip filesystem paths per D-015. Settings use `media_root` instead of `library_paths`; old settings fall back to `library_paths[0]` at load time. The dashboard gains scan status polling and metadata editing (title/description/year/genre/studio); per-episode title editing was removed.
+
+---
+
 Future Decisions
 
 Additional decisions should be added whenever changes affect:

@@ -1,3 +1,5 @@
+import { formatTime } from "./util.js";
+
 export class Player {
   constructor(elements, callbacks = {}) {
     this.video = elements.video;
@@ -16,6 +18,7 @@ export class Player {
     this.prevButton = elements.prevButton;
     this.nextButton = elements.nextButton;
     this.onProgress = callbacks.onProgress || (() => {});
+    this.onPause = callbacks.onPause || (() => {});
     this.onComplete = callbacks.onComplete || (() => {});
     this.onNavigate = callbacks.onNavigate || (() => {});
     this.currentEpisode = null;
@@ -37,6 +40,11 @@ export class Player {
     this.video.addEventListener("waiting", () => this.loading.removeAttribute("hidden"));
     this.video.addEventListener("canplay", () => this.loading.setAttribute("hidden", ""));
     this.video.addEventListener("error", () => this.error.removeAttribute("hidden"));
+    this.video.addEventListener("pause", () => {
+      if (this.resumeReady && this.currentEpisode) {
+        this.onPause(this.currentEpisode, this.video.currentTime);
+      }
+    });
     this.video.addEventListener("ended", () => this.onComplete(this.currentEpisode));
     this.timeline.addEventListener("input", () => {
       if (this.video.duration) this.video.currentTime = (Number(this.timeline.value) / 100) * this.video.duration;
@@ -172,10 +180,4 @@ export class Player {
     if (!document.fullscreenElement) target.requestFullscreen?.();
     else document.exitFullscreen?.();
   }
-}
-
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const remainder = Math.floor(seconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${remainder}`;
 }

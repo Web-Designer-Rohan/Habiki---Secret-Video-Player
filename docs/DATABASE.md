@@ -74,11 +74,7 @@ JSON Structure
 Recommended structure:
 
 data/
-├── library.json
-└── localization/
-    ├── en.json
-    ├── hi.json
-    └── ja.json
+└── library.json
 
 Application configuration is stored separately at `config/config.json`.
 
@@ -86,17 +82,26 @@ Application configuration is stored separately at `config/config.json`.
 
 library.json
 
-Stores the media library.
+Stores the media library cache built by the scanner (the filesystem is the
+source of truth; this file is regenerated and may be deleted safely).
 
-Each anime contains:
+Version 2 structure:
+
+- version (2)
+- scanned_at (ISO-8601 UTC)
+- media_root (the configured media root, e.g. "contents")
+- entries (list of titles)
+- signatures (map of video path -> [mtime_ns, size] used for incremental rescans)
+
+Each entry contains:
 
 - Identifier
+- Type (anime | movies | tutorials | other)
 - Title
-- Poster
-- Banner
-- Description (optional)
-- Genres (future)
-- Seasons
+- Poster (path, optional)
+- Banner (path, optional)
+- Description / Year / Genre / Studio (optional, from info.json)
+- Seasons (anime only)
 
 Each season contains:
 
@@ -110,7 +115,9 @@ Each episode contains:
 - Video path
 - Subtitle paths
 - Thumbnail path
-- Duration
+
+Metadata edits made in the dashboard are written to `info.json` next to the
+title's folder, so a rescan keeps them. `library.json` is gitignored.
 
 ---
 
@@ -120,8 +127,7 @@ Stores application configuration.
 
 Examples:
 
-- Library paths
-- Default language
+- Media root (default "contents"; a relative folder name or an absolute path)
 - Player preferences
 - Theme
 - Dashboard settings
@@ -199,7 +205,6 @@ Stores user preferences.
 
 Examples:
 
-- Language
 - Volume
 - Subtitle preference
 - Playback speed
@@ -256,32 +261,41 @@ config/
 
 data/
 ├── library.json
-├── database.db
-└── localization/
+└── database.db
 
 ---
 
 Media Organization
 
-media/
-├── Anime/
-│   ├── poster.webp
-│   ├── banner.webp
-│   ├── Season 01/
-│   │   ├── Episode 01.mp4
-│   │   ├── Episode 01.vtt
-│   │   ├── Episode 02.mp4
-│   │   └── ...
-│   └── Season 02/
-└── ...
+contents/                 # configurable media root (default "contents")
+├── Anime/                # one folder per title
+│   └── Title/
+│       ├── info.json     # optional metadata (title, description, year, genre, studio)
+│       ├── poster.webp   # optional
+│       ├── banner.webp   # optional
+│       ├── Season 01/    # "Season 1", "S01", or "1" all work
+│       │   ├── 1.mp4     # episodes: 1, EP 1, episode 1, E01, S2E5, or unnamed
+│       │   ├── 1.vtt     # optional subtitle
+│       │   └── 1.webp    # optional episode thumbnail
+│       └── Season 02/
+├── Movies/               # one video per title (direct file or folder)
+├── Tutorials/            # same rules as Movies
+└── Other/                # same rules as Movies
 
-The backend scans this structure to build the library.
+The scanner builds the library from this tree deterministically:
+- Anime: title folders with numbered seasons/episodes.
+- Movies/Tutorials/Other: each video file (or single-video folder) is one
+  standalone title; standalone entries are playable as a single episode.
+The scan runs in the background (POST /dashboard/library/scan, progress via
+GET /dashboard/scan/status) and is incremental via the signature map.
 
 ---
 
 Thumbnail Generation
 
-Episode thumbnails are generated automatically during library scanning.
+Episode thumbnails are generated with scripts/generate_thumbnails.py (an FFmpeg
+frame capture stored as a WebP next to the episode) and are discovered by the
+scanner; the scan itself never spawns FFmpeg.
 
 Recommended capture point:
 

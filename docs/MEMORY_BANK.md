@@ -233,21 +233,6 @@ Backgrounds are decorative and must never reduce usability.
 
 ---
 
-Localization
-
-Primary Language
-
-Hindi
-
-Additional Languages
-
-- English
-- Japanese
-
-Localization should be expandable.
-
----
-
 Performance Guidelines
 
 Prefer:

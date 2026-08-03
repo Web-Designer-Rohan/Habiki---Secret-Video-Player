@@ -1,13 +1,9 @@
 {
-  "library_paths": [],
-  "language": "hi",
+  "media_root": "contents",
   "theme": "dark",
   "player": {
     "default_volume": 1.0,
     "default_speed": 1.0,
     "subtitles_enabled": true
-  },
-  "dashboard": {
-    "session_days": 14
   }
 }

@@ -4,14 +4,48 @@ import base64
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta, timezone
+import time
 from typing import Annotated
 
 from fastapi import Depends, Request
 
-from .core import AuthenticationError, AuthorizationError, Settings
+from .core import AuthenticationError, Settings
 from .database import Database
-from .repositories import SessionRepository, UserRepository
+from .repositories import SecretStore
+
+
+class LoginRateLimiter:
+    """Sliding-window brute-force protection for the unlock endpoint.
+
+    Failures are tracked per ``client_host``; a key is locked out until the
+    oldest failure falls outside the window. Success resets the key.
+    """
+
+    def __init__(self, max_attempts: int = 5, window_seconds: int = 900):
+        self.max_attempts = max_attempts
+        self.window_seconds = window_seconds
+        self._failures: dict[str, list[float]] = {}
+
+    def _prune(self, key: str, now: float) -> list[float]:
+        cutoff = now - self.window_seconds
+        kept = [stamp for stamp in self._failures.get(key, []) if stamp > cutoff]
+        if kept:
+            self._failures[key] = kept
+        else:
+            self._failures.pop(key, None)
+        return kept
+
+    def allowed(self, key: str, now: float | None = None) -> bool:
+        now = now if now is not None else time.monotonic()
+        return len(self._prune(key, now)) < self.max_attempts
+
+    def record_failure(self, key: str, now: float | None = None) -> None:
+        now = now if now is not None else time.monotonic()
+        self._prune(key, now)
+        self._failures.setdefault(key, []).append(now)
+
+    def reset(self, key: str) -> None:
+        self._failures.pop(key, None)
 
 
 class PasswordHasher:
@@ -37,59 +71,79 @@ class PasswordHasher:
 
 
 class AuthService:
-    cookie_name = "hibiki_session"
+    """Single local password gate for the whole application.
+
+    The application starts locked. Unlocking with the correct password keeps
+    the application usable until the process closes; no sessions are persisted.
+    """
 
     def __init__(self, database: Database, settings: Settings):
         self.database = database
         self.settings = settings
+        self.unlock_limiter = LoginRateLimiter()
+        self._unlocked = False
 
-    def ensure_initial_admin(self, username: str = "mochi", password: str | None = None) -> bool:
+    def ensure_password(self, password: str | None = None) -> bool:
+        """Create an initial random password when none is stored yet.
+
+        Returns True when a password was created. The generated password is
+        written to config/initial-admin.txt (never overwriting an existing
+        file) and logged for the operator.
+        """
         with self.database.connect() as connection:
-            users = UserRepository(connection)
-            if users.count() > 0:
+            if SecretStore(connection).get_password_hash():
                 return False
             initial_password = password or secrets.token_urlsafe(18)
-            users.create(username, PasswordHasher.hash(initial_password), "mochi")
-            if password is None:
-                self.settings.config_path.with_name("initial-admin.txt").write_text(
-                    f"Username: {username}\nPassword: {initial_password}\nDelete this file after signing in.\n",
+            SecretStore(connection).set_password_hash(PasswordHasher.hash(initial_password))
+        if password is None:
+            credential_file = self.settings.config_path.with_name("initial-admin.txt")
+            if credential_file.exists():
+                self._logger().warning("initial-admin.txt already exists; keeping the existing file")
+            else:
+                credential_file.write_text(
+                    f"Password: {initial_password}\n"
+                    "Delete this file after unlocking.\n",
                     encoding="utf-8",
                 )
-            return True
+        return True
 
-    def login(self, username: str, password: str) -> str:
+    def is_unlocked(self) -> bool:
+        return self._unlocked
+
+    def unlock(self, password: str) -> bool:
         with self.database.connect() as connection:
-            user = UserRepository(connection).get_by_username(username)
-            if not user or not PasswordHasher.verify(password, user["password_hash"]):
-                raise AuthenticationError("Invalid username or password")
-            session_id = secrets.token_urlsafe(32)
-            expires_at = datetime.now(timezone.utc) + timedelta(days=self.settings.session_days)
-            SessionRepository(connection).create(session_id, user["id"], expires_at.isoformat())
-            SessionRepository(connection).delete_expired()
-            return session_id
+            encoded = SecretStore(connection).get_password_hash()
+        if not encoded or not PasswordHasher.verify(password, encoded):
+            return False
+        self._unlocked = True
+        return True
 
-    def logout(self, session_id: str | None) -> None:
-        if session_id:
-            with self.database.connect() as connection:
-                SessionRepository(connection).delete(session_id)
-
-    def current_user(self, request: Request) -> dict:
-        session_id = request.cookies.get(self.cookie_name)
-        if not session_id:
-            raise AuthenticationError("Authentication required")
+    def set_password(self, password: str) -> None:
+        """Replace the stored password hash (used at first launch and in tests)."""
         with self.database.connect() as connection:
-            user = SessionRepository(connection).get_user(session_id)
-        if not user:
-            raise AuthenticationError("Session expired")
-        return user
+            SecretStore(connection).set_password_hash(PasswordHasher.hash(password))
+
+    def lock(self) -> None:
+        self._unlocked = False
+
+    def change_password(self, current: str, new: str) -> None:
+        if not self._unlocked:
+            raise AuthenticationError("Unlock required")
+        with self.database.connect() as connection:
+            store = SecretStore(connection)
+            encoded = store.get_password_hash()
+            if not encoded or not PasswordHasher.verify(current, encoded):
+                raise AuthenticationError("Current password is incorrect")
+            store.set_password_hash(PasswordHasher.hash(new))
+
+    @staticmethod
+    def _logger():
+        import logging
+        return logging.getLogger("hibiki.application")
 
 
-def current_user(request: Request) -> dict:
-    service = request.app.state.auth
-    return service.current_user(request)
-
-
-def require_mochi(user: Annotated[dict, Depends(current_user)]) -> dict:
-    if user["role"] != "mochi":
-        raise AuthorizationError("Mochi administrator access required")
-    return user
+def require_unlocked(request: Request) -> bool:
+    """Dependency guarding administrative and activity endpoints."""
+    if not request.app.state.auth.is_unlocked():
+        raise AuthenticationError("Unlock required")
+    return True

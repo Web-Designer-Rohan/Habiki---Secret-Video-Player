@@ -14,25 +14,22 @@ export async function request(path, options = {}) {
 }
 
 export const api = {
-  library: (query = "", filter = "all", sort = "default") =>
-    request(`/library/search?query=${encodeURIComponent(query)}&filter=${encodeURIComponent(filter)}&sort=${encodeURIComponent(sort)}`),
-  poster: (animeId) => `/api/v1/library/${encodeURIComponent(animeId)}/poster`,
+  library: (query = "", category = "all", sort = "default", signal) =>
+    request(`/library/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}&sort=${encodeURIComponent(sort)}`, { signal }),
+  poster: (entryId) => `/api/v1/library/${encodeURIComponent(entryId)}/poster`,
+  banner: (entryId) => `/api/v1/library/${encodeURIComponent(entryId)}/banner`,
   banners: () => request("/banners"),
-  session: () => request("/auth/session"),
-  login: (credentials) => request("/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
-  logout: () => request("/auth/logout", { method: "POST" }),
+  version: () => request("/version"),
+  authStatus: () => request("/auth/status"),
+  unlock: (password) => request("/auth/unlock", { method: "POST", body: JSON.stringify({ password }) }),
+  changePassword: (currentPassword, newPassword) => request("/auth/password", { method: "PUT", body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }),
   scan: () => request("/dashboard/library/scan", { method: "POST" }),
-  users: () => request("/users"),
-  createUser: (username, password, role) => request("/users", { method: "POST", body: JSON.stringify({ username, password, role }) }),
-  deleteUser: (userId) => request(`/users/${encodeURIComponent(userId)}`, { method: "DELETE" }),
+  scanStatus: () => request("/dashboard/scan/status"),
   dashboardStatus: () => request("/dashboard/status"),
   dashboardLibrary: () => request("/dashboard/library"),
   editAnime: (animeId, values) => request(`/dashboard/anime/${encodeURIComponent(animeId)}`, { method: "PATCH", body: JSON.stringify(values) }),
-  editEpisode: (episodeId, values) => request(`/dashboard/episode/${encodeURIComponent(episodeId)}`, { method: "PATCH", body: JSON.stringify(values) }),
-  localization: (code) => request(`/dashboard/localization/${code}`),
-  saveLocalization: (code, values) => request(`/dashboard/localization/${code}`, { method: "PUT", body: JSON.stringify({ values }) }),
   refreshDatabase: () => request("/dashboard/database/refresh", { method: "POST" }),
-  config: (libraryPaths, language) => request("/dashboard/config", { method: "POST", body: JSON.stringify({ library_paths: libraryPaths, language }) }),
+  config: (mediaRoot) => request("/dashboard/config", { method: "POST", body: JSON.stringify({ media_root: mediaRoot }) }),
   getConfig: () => request("/dashboard/config"),
   episodeSource: (episodeId) => request(`/player/source/${encodeURIComponent(episodeId)}`),
   progress: (episodeId) => request(`/player/progress/${encodeURIComponent(episodeId)}`),
@@ -46,5 +43,4 @@ export const api = {
   clearHistory: () => request("/history", { method: "DELETE" }),
   settings: () => request("/settings"),
   saveSettings: (values) => request("/settings", { method: "PUT", body: JSON.stringify({ values }) }),
-  language: (code) => request("/language", { method: "POST", body: JSON.stringify({ values: { language: code } }) }),
 };

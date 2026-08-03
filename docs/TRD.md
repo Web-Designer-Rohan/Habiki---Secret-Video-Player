@@ -243,7 +243,7 @@ Application configuration should be centralized and externalized.
 
 Configuration should include:
 
-- Library paths
+- Media root (single folder containing Anime / Movies / Tutorials / Other)
 - Language preferences
 - Player preferences
 - Dashboard settings

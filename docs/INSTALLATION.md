@@ -63,10 +63,10 @@ Hibiki/
 ├── assets/
 ├── backend/
 ├── config/
+├── contents/          # user media root (gitignored; created on first run)
 ├── data/
 ├── docs/
 ├── frontend/
-├── media/
 ├── scripts/
 ├── README.md
 └── LICENSE
@@ -111,14 +111,21 @@ The frontend is served directly by the Python backend.
 
 Media Library
 
-Create the media directory if it does not already exist.
+Create the media root directory if it does not already exist (created
+automatically on first run). The default root is `contents/` and is
+configurable in Settings → Media folder.
 
 Recommended structure:
 
-media/
-└── Anime/
+contents/
+├── Anime/
+├── Movies/
+├── Tutorials/
+└── Other/
 
-The dashboard or library scanner will populate metadata after media is added.
+Add media per the rules in docs/ASSETS.md, then run a library scan from the
+dashboard; the scan runs in the background and indexes everything
+automatically.
 
 ---
 
@@ -169,7 +176,7 @@ Recommended backup locations:
 
 data/
 config/
-media/
+contents/    (or your configured media root)
 
 These directories contain the application configuration, user data, and local media library.
 

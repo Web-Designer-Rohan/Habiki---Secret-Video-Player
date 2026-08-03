@@ -89,7 +89,6 @@ The frontend is responsible for:
 - Displaying media
 - Navigation
 - Player controls
-- Localization
 - Theme rendering
 - Accessibility
 - API communication
@@ -148,37 +147,46 @@ Examples:
 
 8. Media Library
 
-The media library is organized on the local filesystem.
+The media library is organized on the local filesystem; the filesystem is the
+single source of truth.
 
 Recommended structure:
 
-media/
- ├── Anime Name/
- │    ├── poster.webp
- │    ├── Season 01/
- │    │      ├── Episode 01.mp4
- │    │      ├── Episode 01.vtt
- │    │      ├── Episode 02.mp4
- │    │      └── ...
- │    └── Season 02/
- └── ...
+contents/                    # configurable media root (default "contents")
+ ├── Anime/
+ │    └── Anime Name/
+ │         ├── info.json      # optional metadata (title, description, year, genre, studio)
+ │         ├── poster.webp    # optional
+ │         ├── banner.webp    # optional
+ │         ├── Season 01/     # "Season 1", "S01", or "1" all work
+ │         │      ├── 1.mp4   # episodes: 1, EP 1, episode 1, E01, S2E5, or unnamed
+ │         │      ├── 1.vtt
+ │         │      ├── 2.mp4
+ │         │      └── ...
+ │         └── Season 02/
+ ├── Movies/                  # one video per title (direct file or folder)
+ ├── Tutorials/               # same rules as Movies
+ └── Other/                   # same rules as Movies
 
-The application scans this structure to build the library.
+The scanner walks this tree and builds data/library.json as a cache.
 
 ---
 
 9. Library Scanner
 
-The scanner is responsible for:
+The scanner (backend/app/scanner.py) is responsible for:
 
-- Discovering media
-- Validating files
-- Updating JSON metadata
-- Generating thumbnails
-- Detecting changes
-- Reporting errors
+- Discovering media (Anime/Movies/Tutorials/Other categories)
+- Parsing episode numbers and cleaning titles
+- Reading optional info.json metadata and poster/banner images
+- Writing the versioned library.json cache
+- Incremental rebuilds via a path -> [mtime_ns, size] signature map
+- Reporting warnings (missing assets, invalid names, duplicates, misplaced media)
 
-Scanning should be incremental whenever possible.
+Scans run in a background thread (POST /dashboard/library/scan, progress via
+GET /dashboard/scan/status) so they never block the API or the player.
+Thumbnail generation is a separate optional script
+(scripts/generate_thumbnails.py) and never runs FFmpeg during a scan.
 
 ---
 
@@ -254,7 +262,6 @@ Application behavior is configuration-driven.
 Configuration includes:
 
 - Library locations
-- Language
 - Theme
 - Player options
 - Dashboard preferences

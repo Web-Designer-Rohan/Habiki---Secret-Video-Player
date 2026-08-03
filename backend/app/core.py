@@ -11,23 +11,32 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+VERSION = "1.0.0"
+
 
 @dataclass(slots=True)
 class Settings:
     project_root: Path = PROJECT_ROOT
     data_dir: Path = PROJECT_ROOT / "data"
     config_dir: Path = PROJECT_ROOT / "config"
-    media_dir: Path = PROJECT_ROOT / "media"
+    media_root: str = "contents"
     logs_dir: Path = PROJECT_ROOT / "logs"
     frontend_dir: Path = PROJECT_ROOT / "frontend"
     database_path: Path = PROJECT_ROOT / "data" / "database.db"
     library_path: Path = PROJECT_ROOT / "data" / "library.json"
     config_path: Path = PROJECT_ROOT / "config" / "config.json"
-    version: str = "0.2.0"
-    default_language: str = "hi"
-    session_days: int = 14
-    library_paths: list[str] = field(default_factory=list)
-    secret_key: str = ""
+    version: str = VERSION
+
+    @property
+    def media_dir(self) -> Path:
+        """Resolve the configured media root to an absolute directory.
+
+        Relative values are interpreted against the project root, so the
+        default ``contents`` means ``<project>/contents``. Absolute paths are
+        used verbatim (media may live outside the repository).
+        """
+        root = Path(self.media_root).expanduser()
+        return root.resolve() if root.is_absolute() else (self.project_root / root).resolve()
 
     @classmethod
     def load(cls) -> "Settings":
@@ -42,35 +51,25 @@ class Settings:
                 stored = json.loads(settings.config_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as error:
                 raise RuntimeError(f"Unable to read configuration: {error}") from error
-            settings.default_language = stored.get("language", settings.default_language)
-            dashboard = stored.get("dashboard", {})
-            settings.session_days = int(dashboard.get("session_days", stored.get("session_days", settings.session_days)))
-            if settings.session_days < 1:
-                raise ValueError("dashboard.session_days must be at least 1")
-            settings.library_paths = [str(path) for path in stored.get("library_paths", [])]
-            settings.secret_key = str(stored.get("secret_key", ""))
+            settings.media_root = stored.get("media_root", "contents")
+            # Legacy fallback: the first configured library path becomes the
+            # single media root when no media_root was stored yet.
+            if "media_root" not in stored and stored.get("library_paths"):
+                settings.media_root = stored["library_paths"][0]
         else:
             settings.save()
         return settings
 
-    def library_roots(self) -> list[Path]:
-        paths = [Path(path).expanduser().resolve() for path in self.library_paths]
-        return paths or [self.media_dir.resolve()]
-
     def save(self) -> None:
         payload = {
-            "library_paths": [str(Path(path).expanduser()) for path in self.library_paths],
-            "language": self.default_language,
+            "media_root": self.media_root,
             "theme": "dark",
             "player": {
                 "default_volume": 1.0,
                 "default_speed": 1.0,
                 "subtitles_enabled": True,
             },
-            "dashboard": {"session_days": self.session_days},
         }
-        if self.secret_key:
-            payload["secret_key"] = self.secret_key
         self.config_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
@@ -120,8 +119,4 @@ class HibikiError(Exception):
 
 
 class AuthenticationError(HibikiError):
-    """Raised when credentials or a session are invalid."""
-
-
-class AuthorizationError(HibikiError):
-    """Raised when a user lacks permission for an operation."""
+    """Raised when credentials are invalid or the application is locked."""

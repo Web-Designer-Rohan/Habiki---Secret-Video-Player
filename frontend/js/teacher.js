@@ -6,7 +6,6 @@ export class TeacherMode {
     this.title = elements.title;
     this.meta = elements.meta;
     this.body = elements.body;
-    this.getMessages = callbacks.getMessages || (() => ({}));
     this.onActivate = callbacks.onActivate || (() => {});
     this.onDeactivate = callbacks.onDeactivate || (() => {});
     this.active = false;
@@ -61,22 +60,21 @@ export class TeacherMode {
   }
 
   render() {
-    const messages = this.getMessages();
-    this.kicker.textContent = messages.teacher_mode || "Reading mode";
+    this.kicker.textContent = "Reading mode";
     this.exitButton.textContent = this.keyLabel
-      ? `${messages.teacher_exit || "Exit reading mode"} · ${this.keyLabel}`
-      : (messages.teacher_exit || "Exit reading mode");
-    this.exitButton.setAttribute("aria-label", messages.teacher_exit || "Exit reading mode");
+      ? `Exit reading mode · ${this.keyLabel}`
+      : "Exit reading mode";
+    this.exitButton.setAttribute("aria-label", "Exit reading mode");
     if (this.readingPage) {
       this.body.replaceChildren();
       const frame = document.createElement("iframe");
       frame.className = "teacher__frame";
       frame.src = this.readingPage;
-      frame.title = messages.teacher_mode || "Reading mode";
+      frame.title = "Reading mode";
       this.body.append(frame);
       return;
     }
-    const text = this.readingText || messages.teacher_reading_text || "";
+    const text = this.readingText || "";
     this.body.textContent = text;
   }
 

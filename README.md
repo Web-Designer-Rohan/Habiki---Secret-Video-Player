@@ -33,11 +33,13 @@ Features
 
 Media
 
-- Local media library
-- Anime organization
-- Seasons and episodes
-- Episode thumbnails
-- Anime posters
+- Filesystem-driven library (single media root, default `contents/`)
+- Automatic categories: Anime / Movies / Tutorials / Other
+- Seasons and episodes (Anime)
+- Standalone titles with one-click play (Movies / Tutorials / Other)
+- Posters, banners, and episode thumbnails
+- Optional info.json metadata (title, description, year, genre, studio)
+- Incremental background scans with warnings
 - Continue Watching
 - Favorites
 - Watch history
@@ -64,10 +66,10 @@ System
 
 - Offline-first
 - Self-hosted
-- Local configuration
-- Secure dashboard authentication
-- Automatic media scanning
-- JSON media library
+- Local configuration (media root, player preferences)
+- Single-password local authentication (scrypt, brute-force protection)
+- Automatic media scanning (background, deterministic, incremental)
+- JSON library cache + info.json metadata
 - SQLite user data
 
 ---
@@ -127,10 +129,10 @@ Project Structure
 assets/
 backend/
 config/
+contents/      # user media root (gitignored; created on first run)
 data/
 docs/
 frontend/
-media/
 scripts/
 README.md
 
@@ -164,7 +166,7 @@ These documents act as the project's single source of truth.
 
 Privacy and offline operation
 
-Hibiki is local-first and designed to work offline after setup. Continue Watching, Favorites, Watch History, local authentication, localization preference, settings, and generated library metadata stay on the user's device. The current application has no analytics, advertising, cloud synchronization, telemetry, or user tracking. Users remain responsible for the rights to media and other assets they import.
+Hibiki is local-first and designed to work offline after setup. Continue Watching, Favorites, Watch History, local authentication, settings, and generated library metadata stay on the user's device. The current application has no analytics, advertising, cloud synchronization, telemetry, or user tracking. Users remain responsible for the rights to media and other assets they import.
 
 Third-party acknowledgements
 
@@ -176,9 +178,9 @@ Current Status
 
 Current Phase
 
-Foundation implementation in progress
+Release 1.0 — complete
 
-The backend foundation, local authentication, library scanner, API boundary, custom player, activity persistence, and season/episode browsing are implemented. Dashboard management, metadata editing, thumbnails, and remaining presentation polish are in progress.
+The filesystem library (Anime / Movies / Tutorials / Other categories under a configurable media root), the background scanner with warnings and incremental rebuilds, the API, the custom player, activity persistence, metadata editing, Teacher Mode, and the dashboard are implemented, tested, and documented.
 
 ---
 
@@ -186,7 +188,7 @@ Version
 
 Current Version
 
-v0.2.0 — Foundation implementation
+v1.0.0 — Final media library integration and release
 
 ---
 

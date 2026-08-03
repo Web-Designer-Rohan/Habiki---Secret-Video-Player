@@ -3,19 +3,18 @@ import json
 import logging
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
-from backend.app.api import LoginPayload
+from backend.app.api import UnlockPayload
 from backend.app.auth import PasswordHasher
 from backend.app.media import MediaService
 from backend.app.core import Settings
 from backend.app.database import Database
 from backend.app.main import validation_error
-from backend.app.repositories import ActivityRepository, SessionRepository, UserRepository
+from backend.app.repositories import ActivityRepository, SecretStore
 from backend.app.scanner import LibraryScanner
 
 
@@ -33,7 +32,9 @@ class FoundationTests(unittest.TestCase):
             database.initialize()
             with database.connect() as connection:
                 tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-            self.assertTrue({"users", "favorites", "continue_watching", "watch_history", "settings", "sessions"} <= tables)
+            self.assertTrue({"favorites", "continue_watching", "watch_history", "settings"} <= tables)
+            self.assertNotIn("users", tables)
+            self.assertNotIn("sessions", tables)
 
     def test_scanner_writes_empty_library_without_media(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -41,13 +42,13 @@ class FoundationTests(unittest.TestCase):
             settings = Settings(
                 data_dir=root / "data",
                 config_dir=root / "config",
-                media_dir=root / "media",
+                media_root="contents",
                 logs_dir=root / "logs",
                 library_path=root / "data" / "library.json",
-                library_paths=[],
             )
             library = LibraryScanner(settings, logging.getLogger("test-scanner")).scan()
-            self.assertEqual(library["anime"], [])
+            self.assertEqual(library["entries"], [])
+            self.assertEqual(library["version"], 2)
             self.assertTrue(settings.library_path.exists())
 
     def test_activity_progress_updates_history_and_can_be_removed(self):
@@ -55,7 +56,6 @@ class FoundationTests(unittest.TestCase):
             database = Database(Path(directory) / "database.db")
             database.initialize()
             with database.connect() as connection:
-                user = UserRepository(connection).create("mochi", "hash", "mochi")
                 activity = ActivityRepository(connection)
                 payload = {
                     "episode_id": "show-s01-e01",
@@ -64,17 +64,17 @@ class FoundationTests(unittest.TestCase):
                     "episode_number": 1,
                     "playback_position": 42.5,
                 }
-                activity.save_progress(user["id"], payload)
-                self.assertEqual(activity.progress(user["id"], payload["episode_id"])["playback_position"], 42.5)
-                self.assertEqual(activity.history(user["id"]), [])
-                activity.save_progress(user["id"], {**payload, "completed": True})
-                self.assertIsNone(activity.progress(user["id"], payload["episode_id"]))
-                self.assertEqual(len(activity.history(user["id"])), 1)
+                activity.save_progress(payload)
+                self.assertEqual(activity.progress(payload["episode_id"])["playback_position"], 42.5)
+                self.assertEqual(activity.history(), [])
+                activity.save_progress({**payload, "completed": True})
+                self.assertIsNone(activity.progress(payload["episode_id"]))
+                self.assertEqual(len(activity.history()), 1)
 
     def test_media_service_accepts_only_supported_indexed_formats(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            settings = Settings(media_dir=root, library_paths=[])
+            settings = Settings(media_root=str(root))
             scanner = LibraryScanner(settings, logging.getLogger("test-media"))
             media = MediaService(settings, scanner)
             supported = root / "episode.mp4"
@@ -87,10 +87,11 @@ class FoundationTests(unittest.TestCase):
 
     def test_public_library_removes_local_paths(self):
         library = {
-            "version": 1,
-            "anime": [{
+            "version": 2,
+            "entries": [{
                 "id": "show",
                 "title": "Show",
+                "type": "anime",
                 "path": "/private/media/Show",
                 "seasons": [{"number": 1, "episodes": [{
                     "id": "show-s01-e01",
@@ -104,26 +105,23 @@ class FoundationTests(unittest.TestCase):
         public = MediaService.public_library(library)
         serialized = str(public)
         self.assertNotIn("/private/media", serialized)
-        self.assertEqual(public["anime"][0]["seasons"][0]["episodes"][0]["id"], "show-s01-e01")
+        self.assertEqual(public["entries"][0]["seasons"][0]["episodes"][0]["id"], "show-s01-e01")
 
-    def test_expired_sessions_are_cleaned_up(self):
+    def test_secret_store_stores_password_hash_outside_settings_whitelist(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Database(Path(directory) / "database.db")
             database.initialize()
             with database.connect() as connection:
-                user = UserRepository(connection).create("mochi", "hash", "mochi")
-                sessions = SessionRepository(connection)
-                past = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-                future = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
-                sessions.create("expired-session", user["id"], past)
-                sessions.create("active-session", user["id"], future)
-                sessions.delete_expired()
-                self.assertIsNone(sessions.get_user("expired-session"))
-                self.assertIsNotNone(sessions.get_user("active-session"))
+                store = SecretStore(connection)
+                self.assertIsNone(store.get_password_hash())
+                store.set_password_hash("encoded-hash")
+                self.assertEqual(store.get_password_hash(), "encoded-hash")
+                # The hash must not leak through the generic settings reader.
+                self.assertNotIn(SecretStore.key, ActivityRepository(connection).setting_values())
 
     def test_validation_error_response_does_not_leak_internals(self):
         with self.assertRaises(ValidationError) as context:
-            LoginPayload(username="", password="submitted-secret")
+            UnlockPayload(password="")
         request_error = RequestValidationError(context.exception.errors())
         response = asyncio.run(validation_error(None, request_error))
         body = json.loads(response.body)

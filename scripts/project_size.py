@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Estimate and report the project size breakdown for Hibiki.
 
-Reports bytes for source code, documentation, bundled assets (fonts, banners,
+Reports bytes for source code, documentation, bundled assets (fonts,
 vendor), user media (posters), generated artifacts (database), and totals with
 and without the user-supplied media library.
 """
@@ -16,9 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRS = ("backend", "frontend", "scripts")
 DOCS_DIR = PROJECT_ROOT / "docs"
 FONTS_DIR = PROJECT_ROOT / "assets" / "fonts"
-BANNERS_DIR = PROJECT_ROOT / "assets" / "banners"
 VENDOR_DIR = PROJECT_ROOT / "assets" / "vendor"
-MEDIA_DIR = PROJECT_ROOT / "media"
+MEDIA_DIR = PROJECT_ROOT / "contents"
 DB_PATH = PROJECT_ROOT / "data" / "database.db"
 
 
@@ -61,18 +60,16 @@ def main() -> int:
     rows.append(("Documentation (docs/)", docs))
     fonts = dir_size(FONTS_DIR)
     rows.append(("Fonts (assets/fonts)", fonts))
-    banners = dir_size(BANNERS_DIR)
-    rows.append(("Banners (assets/banners)", banners))
     vendor = dir_size(VENDOR_DIR)
     rows.append(("Vendored assets (assets/vendor)", vendor))
     posters = poster_size()
-    rows.append(("Posters (media/**/poster.*, user media)", posters))
+    rows.append(("Posters (contents/**/poster.*, user media)", posters))
     thumbnails = dir_size(MEDIA_DIR) - posters
-    rows.append(("Thumbnails + other media (media/)", thumbnails))
+    rows.append(("Thumbnails + other media (contents/)", thumbnails))
     database = file_size(DB_PATH)
     rows.append(("Database (data/database.db)", database))
 
-    application_total = source + docs + fonts + banners + vendor + database
+    application_total = source + docs + fonts + vendor + database
     project_total = application_total + posters + thumbnails
 
     print("Hibiki project size estimate")

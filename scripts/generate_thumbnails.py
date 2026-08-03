@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MEDIA_DIR = PROJECT_ROOT / "media"
+MEDIA_DIR = PROJECT_ROOT / "contents"
 
 VIDEO_EXTENSIONS = {".mp4"}
 THUMBNAIL_EXTENSIONS = {".webp", ".png", ".jpg", ".jpeg"}
@@ -102,7 +102,7 @@ def main() -> int:
                         help="capture point in seconds (3-10 recommended; default 5)")
     parser.add_argument("--force", action="store_true", help="regenerate existing thumbnails")
     parser.add_argument("--dry-run", action="store_true", help="list work without writing files")
-    parser.add_argument("--root", type=Path, default=MEDIA_DIR, help="media root to scan (default: media/)")
+    parser.add_argument("--root", type=Path, default=MEDIA_DIR, help="media root to scan (default: contents/)")
     args = parser.parse_args()
 
     videos = find_videos(args.root)

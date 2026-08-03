@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
   <meta name="description" content="Hibiki — your private local anime library.">
   <title>Hibiki — Local library</title>
@@ -13,11 +13,11 @@
   <section class="welcome" id="welcome" aria-labelledby="welcome-title">
     <div class="welcome__backdrop" id="welcome-backdrop" aria-hidden="true"></div>
     <div class="welcome__content">
-      <p class="eyebrow" data-i18n="welcome_kicker">ऑफ़लाइन / निजी / आपकी</p>
-      <h1 id="welcome-title" class="display-title" data-i18n="welcome_title">Hibiki</h1>
-      <p class="welcome__body" data-i18n="welcome_body">आपके पसंदीदा किस्सों के लिए एक शांत जगह।</p>
+      <p class="eyebrow">Offline / Private / Yours</p>
+      <h1 id="welcome-title" class="display-title">Hibiki</h1>
+      <p class="welcome__body">A quiet place for the stories you love.</p>
       <button class="button button--primary welcome__enter" id="enter-library" type="button">
-        <span data-i18n="enter_library">लाइब्रेरी खोलें</span><span aria-hidden="true">↗</span>
+        <span>Open Library</span><span aria-hidden="true">↗</span>
       </button>
       <button class="welcome__swipe" id="swipe-entry" type="button" aria-label="Enter library">
         <span>↓</span><span class="welcome__swipe-line" aria-hidden="true"></span>
@@ -29,14 +29,10 @@
   <main class="application" id="application" hidden>
     <header class="topbar">
       <a class="wordmark" href="#top" aria-label="Hibiki home"><span class="wordmark__mark">H</span><span>Hibiki</span></a>
-      <p class="topbar__tagline" data-i18n="brand_tagline">आपकी स्थानीय लाइब्रेरी, आपके ध्यान में।</p>
       <div class="topbar__actions">
-        <label class="language-select"><span class="sr-only" data-i18n="language">भाषा</span><select id="language-select" aria-label="Language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select></label>
         <button class="icon-button" id="teacher-open" type="button" title="Reading mode" aria-label="Reading mode">T</button>
         <button class="icon-button" id="settings-open" type="button" title="Settings" aria-label="Settings">⚙</button>
-        <button class="icon-button" id="about-open" type="button" title="About Hibiki" aria-label="About Hibiki">i</button>
-        <button class="icon-button" id="login-open" type="button" title="Sign in" aria-label="Sign in">↗</button>
-        <button class="icon-button" id="logout-open" type="button" title="Sign out" aria-label="Sign out" hidden>↩</button>
+        <button class="icon-button" id="unlock-open" type="button" title="Unlock" aria-label="Unlock">🔓</button>
       </div>
     </header>
 
@@ -44,10 +40,10 @@
       <aside class="rail" aria-label="Primary navigation">
         <p class="rail__index">01—04</p>
         <nav class="rail__nav">
-          <a class="rail__link rail__link--active" href="#library"><span>01</span><span data-i18n="library">लाइब्रेरी</span></a>
-          <a class="rail__link" href="#continue"><span>02</span><span data-i18n="continue_watching">देखना जारी रखें</span></a>
-          <a class="rail__link" href="#favorites"><span>03</span><span data-i18n="favorites">पसंदीदा</span></a>
-          <a class="rail__link" href="#dashboard"><span>04</span><span data-i18n="dashboard">डैशबोर्ड</span></a>
+          <a class="rail__link rail__link--active" href="#library"><span>01</span><span>Library</span></a>
+          <a class="rail__link" href="#continue"><span>02</span><span>Continue Watching</span></a>
+          <a class="rail__link" href="#favorites"><span>03</span><span>Favorites</span></a>
+          <a class="rail__link" href="#dashboard"><span>04</span><span>Dashboard</span></a>
         </nav>
         <p class="rail__foot">PRIVATE<br>MEDIA / 01</p>
       </aside>
@@ -55,14 +51,13 @@
       <div class="content">
         <section class="hero" aria-labelledby="hero-title">
           <div><p class="eyebrow">Hibiki / local library</p><h2 id="hero-title">The stories<br><em>stay close.</em></h2></div>
-          <div class="hero__note"><span class="status-dot"></span><span data-i18n="ready">तैयार</span><span class="hero__rule"></span><span id="library-count">0 titles</span></div>
         </section>
 
         <section class="player-panel" id="player" aria-labelledby="player-heading">
           <div class="section-heading"><div><p class="eyebrow">Now playing</p><h3 id="player-heading">A quiet frame</h3></div><span class="section-heading__index">PLAY / 00</span></div>
           <div class="player" id="player-shell">
             <video id="video" preload="metadata" aria-label="Hibiki video player"></video>
-            <div class="player__empty" id="player-empty"><span class="player__empty-mark">◇</span><span data-i18n="player_empty">शुरू करने के लिए कोई एपिसोड चुनें।</span></div>
+            <div class="player__empty" id="player-empty"><span class="player__empty-mark">◇</span><span>Select an episode to start.</span></div>
             <div class="player__loading" id="player-loading" hidden>Loading</div>
             <div class="player__error" id="player-error" hidden role="alert">This episode could not be played.</div>
             <div class="player__controls" id="player-controls">
@@ -82,99 +77,86 @@
         </section>
 
         <section class="library-section" id="library" aria-labelledby="library-heading">
-          <div class="section-heading"><div><p class="eyebrow">Collection / 01</p><h3 id="library-heading" data-i18n="library">लाइब्रेरी</h3></div><label class="search"><span class="sr-only" data-i18n="search">अपनी लाइब्रेरी खोजें</span><input id="library-search" type="search" data-i18n-placeholder="search" placeholder="अपनी लाइब्रेरी खोजें"><span>⌕</span></label></div>
+          <div class="section-heading"><div><p class="eyebrow">Collection / 01</p><h3 id="library-heading">Library</h3></div><label class="search"><span class="sr-only">Search</span><input id="library-search" type="search" placeholder="Search your library"><span>⌕</span></label></div>
           <div class="library-tools">
             <div class="filter-pills" id="library-filters" role="group" aria-label="Library filters">
-              <button class="filter-pill is-active" type="button" data-filter="all" data-i18n="filter_all">All</button>
-              <button class="filter-pill" type="button" data-filter="series" data-i18n="filter_series">Series</button>
-              <button class="filter-pill" type="button" data-filter="tutorials" data-i18n="filter_tutorials">Tutorials</button>
+              <button class="filter-pill is-active" type="button" data-category="all">All</button>
+              <button class="filter-pill" type="button" data-category="anime">Anime</button>
+              <button class="filter-pill" type="button" data-category="movies">Movies</button>
+              <button class="filter-pill" type="button" data-category="tutorials">Tutorials</button>
+              <button class="filter-pill" type="button" data-category="other">Other</button>
             </div>
-            <label class="sort-select"><span class="sr-only">Sort</span><select id="library-sort" aria-label="Sort"><option value="default" data-i18n="sort_default">Order added</option><option value="recent" data-i18n="sort_recent">Recently added</option><option value="title" data-i18n="sort_title">Title A–Z</option></select></label>
+            <label class="sort-select"><span class="sr-only">Sort</span><select id="library-sort" aria-label="Sort"><option value="default">Order added</option><option value="recent">Recently added</option><option value="title">Title A–Z</option></select></label>
           </div>
           <div class="library-grid" id="library-grid"></div>
-          <div class="empty-state" id="library-empty"><span class="empty-state__number">—</span><div><h4 data-i18n="empty_library">आपकी लाइब्रेरी तैयार है।</h4><p data-i18n="empty_library_hint">एक Anime फ़ोल्डर जोड़ें, फिर डैशबोर्ड से स्कैन करें।</p></div></div>
+          <div class="empty-state" id="library-empty"><span class="empty-state__number">—</span><div><h4>Your library is ready.</h4><p>Add content to the media folder (Anime, Movies, Tutorials, Other), then scan from the dashboard.</p></div></div>
         </section>
 
-        <section class="split-sections">
-          <section class="compact-section" id="continue" aria-labelledby="continue-heading"><div class="section-heading"><h3 id="continue-heading" data-i18n="continue_watching">देखना जारी रखें</h3><span class="section-heading__index">02</span></div><div class="activity-list" id="continue-list"></div><div class="empty-mini" id="continue-empty">Nothing paused here yet.</div></section>
-          <section class="compact-section" id="favorites" aria-labelledby="favorites-heading"><div class="section-heading"><h3 id="favorites-heading" data-i18n="favorites">पसंदीदा</h3><span class="section-heading__index">03</span></div><div class="activity-list" id="favorites-list"></div><div class="empty-mini" id="favorites-empty">Your marked stories appear here.</div></section>
+          <section class="split-sections">
+          <section class="compact-section" id="continue" aria-labelledby="continue-heading"><div class="section-heading"><h3 id="continue-heading">Continue Watching</h3><span class="section-heading__index">02</span></div><div class="activity-list" id="continue-list"></div><div class="empty-mini" id="continue-empty">Nothing paused here yet.</div></section>
+          <section class="compact-section" id="favorites" aria-labelledby="favorites-heading"><div class="section-heading"><h3 id="favorites-heading">Favorites</h3><span class="section-heading__index">03</span></div><div class="activity-list" id="favorites-list"></div><div class="empty-mini" id="favorites-empty">Your marked stories appear here.</div></section>
           <section class="compact-section" id="history" aria-labelledby="history-heading"><div class="section-heading"><h3 id="history-heading">History</h3><span class="section-heading__index">04</span></div><div class="activity-list" id="history-list"></div><div class="empty-mini" id="history-empty">Finished episodes appear here.</div><button class="button button--line activity-clear" id="history-clear" type="button" hidden>Clear history</button></section>
         </section>
 
         <section class="dashboard-view" id="dashboard">
-          <div class="section-heading"><div><p class="eyebrow">05 / private room</p><h3 data-i18n="dashboard">डैशबोर्ड</h3></div><div class="dashboard-tools"><button class="button button--line" id="scan-library" type="button" data-i18n="dashboard_scan">Scan library</button><button class="button button--line" id="dash-refresh-db" type="button" data-i18n="dashboard_refresh_db">Refresh database</button><span class="admin-card__status" id="scan-status"></span></div></div>
+          <div class="section-heading"><div><p class="eyebrow">05 / private room</p><h3>Dashboard</h3></div><div class="dashboard-tools"><button class="button button--line" id="scan-library" type="button">Scan library</button><button class="button button--line" id="dash-refresh-db" type="button">Refresh database</button><span class="admin-card__status" id="scan-status"></span></div></div>
           <div class="dashboard-stats" id="dash-stats" hidden></div>
-          <div class="dashboard-locked" id="dash-locked" hidden><p id="dash-message" data-i18n="dashboard_need_login">Sign in as administrator to manage the library.</p><button class="button button--primary" id="dash-login" type="button" data-i18n="sign_in">Sign in</button></div>
+          <div class="dashboard-locked" id="dash-locked" hidden><p id="dash-message">Unlock the application to manage your library and activity.</p><button class="button button--primary" id="dash-unlock" type="button">Unlock</button></div>
           <section class="dash-panel" id="dash-manage" hidden>
-            <div class="section-heading"><div><p class="eyebrow">05 / management</p><h4 data-i18n="dashboard_management">Library management</h4></div><span class="section-heading__index">05 / 01</span></div>
+            <div class="section-heading"><div><p class="eyebrow">05 / management</p><h4>Library management</h4></div><span class="section-heading__index">05 / 01</span></div>
             <div class="manage-list" id="dash-library"></div>
           </section>
-          <section class="dash-panel" id="dash-localization-panel" hidden>
-            <div class="section-heading"><div><p class="eyebrow">05 / localization</p><h4 data-i18n="dashboard_localization">Localization editor</h4></div><span class="section-heading__index">05 / 02</span></div>
-            <div class="loc-tabs" id="dash-loc-tabs"></div>
-            <div class="loc-editor" id="dash-localization"></div>
-          </section>
-          <section class="dash-panel" id="dash-users-panel" hidden>
-            <div class="section-heading"><div><p class="eyebrow">05 / users</p><h4 data-i18n="user_list">Local users</h4></div><span class="section-heading__index">05 / 03</span></div>
-            <div class="user-list" id="dash-users"></div>
-            <form class="user-create" id="user-form">
-              <input id="user-username" name="username" required maxlength="80" autocomplete="off" placeholder="Username" aria-label="Username">
-              <input id="user-password" name="password" required type="password" minlength="12" autocomplete="new-password" placeholder="Password (min 12 characters)" aria-label="Password">
-              <select id="user-role" aria-label="Role"><option value="e-mochi">E-Mochi</option><option value="mochi">Mochi</option></select>
-              <button class="button button--primary" type="submit" data-i18n="user_create">Create user</button>
-            </form>
-          </section>
         </section>
-        <footer class="footer"><span>Hibiki / v0.2.0 · AGPL-3.0-or-later</span><span>Local-first / offline by design</span><nav class="footer__links" aria-label="Legal and project links"><button class="footer__link" id="about-footer" type="button">About</button><a class="footer__link" href="/frontend/legal.html">Legal</a><a class="footer__link" href="/frontend/privacy.html">Privacy</a><a class="footer__link" href="/frontend/attribution.html">Attribution</a><a class="footer__link" href="/LICENSE">License</a><a class="footer__link" href="https://github.com/Web-Designer-Rohan/Habiki---Secret-Video-Player" rel="noopener noreferrer">GitHub</a></nav></footer>
+        <footer class="footer"><span id="footer-version">Hibiki / v1.0.0 · AGPL-3.0-or-later</span><span>Local-first / offline by design</span><nav class="footer__links" aria-label="Legal and project links"><a class="footer__link" href="/frontend/legal.html">Legal</a><a class="footer__link" href="/frontend/privacy.html">Privacy</a><a class="footer__link" href="/frontend/attribution.html">Attribution</a><a class="footer__link" href="/LICENSE">License</a><a class="footer__link" href="https://github.com/Web-Designer-Rohan/Habiki---Secret-Video-Player" rel="noopener noreferrer">GitHub</a></nav></footer>
       </div>
     </div>
   </main>
 
-  <dialog class="modal" id="login-dialog" aria-labelledby="login-title"><form class="modal__form" id="login-form" method="dialog"><button class="modal__close" id="login-close" type="button" aria-label="Close">×</button><p class="eyebrow">Private access</p><h2 id="login-title">Sign in</h2><p class="modal__hint">Use your local Mochi account to access administration.</p><label><span data-i18n="username">Username</span><input id="username" name="username" required autocomplete="username"></label><label><span data-i18n="password">Password</span><input id="password" name="password" required type="password" autocomplete="current-password"></label><p class="form-error" id="login-error" role="alert" hidden></p><button class="button button--primary" type="submit" data-i18n="sign_in">Sign in</button></form></dialog>
-  <dialog class="modal about-dialog" id="about-dialog" aria-labelledby="about-title"><div class="modal__form"><button class="modal__close" id="about-close" type="button" aria-label="Close">×</button><p class="eyebrow">Hibiki / about</p><h2 id="about-title">About Hibiki</h2><p class="modal__hint">A private, local-first library for the stories you keep close.</p><div class="about-dialog__badges"><span class="badge">Local-first</span><span class="badge">Offline</span></div><dl class="about-dialog__details"><div><dt>Version</dt><dd>v0.2.0</dd></div><div><dt>Build date</dt><dd>2026-08-02</dd></div><div><dt>License</dt><dd><a href="/LICENSE">AGPL-3.0-or-later</a></dd></div><div><dt>Credits</dt><dd><a href="/frontend/attribution.html">Open-source contributors</a></dd></div></dl><div class="about-dialog__actions"><a class="button button--line" href="/frontend/legal.html">Legal notice ↗</a><a class="button button--line" href="/frontend/privacy.html">Privacy ↗</a></div></div></dialog>
+  <dialog class="modal" id="unlock-dialog" aria-labelledby="unlock-title"><form class="modal__form" id="unlock-form" method="dialog"><button class="modal__close" id="unlock-close" type="button" aria-label="Close">×</button><p class="eyebrow">Private access</p><h2 id="unlock-title">Unlock</h2><p class="modal__hint">This library is local and private. Enter your password to continue.</p><label><span>Password</span><input id="unlock-password" name="password" required type="password" autocomplete="current-password" autofocus></label><p class="form-error" id="unlock-error" role="alert" hidden></p><button class="button button--primary" type="submit">Unlock</button></form></dialog>
   <dialog class="modal settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
     <form class="modal__form" id="settings-form" method="dialog">
       <button class="modal__close" id="settings-close" type="button" aria-label="Close">×</button>
       <p class="eyebrow">Hibiki / preferences</p>
-      <h2 id="settings-title" data-i18n="settings">सेटिंग्स</h2>
+      <h2 id="settings-title">Settings</h2>
       <section class="settings-group">
-        <h3 data-i18n="settings_language">Language</h3>
-        <select id="set-language"><option value="hi">हिन्दी</option><option value="en">English</option><option value="ja">日本語</option></select>
+        <h3>Theme</h3>
+        <select id="set-theme"><option value="dark">Dark (charcoal)</option></select>
       </section>
       <section class="settings-group">
-        <h3 data-i18n="settings_theme">Theme</h3>
-        <select id="set-theme"><option value="dark" data-i18n="settings_theme_dark">Dark (charcoal)</option></select>
+        <h3>Playback</h3>
+        <label class="settings-row"><span>Default volume</span><input id="set-volume" type="range" min="0" max="100" step="5"></label>
+        <label class="settings-row"><span>Default speed</span><select id="set-speed"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+        <label class="settings-row"><span>Subtitles on by default</span><input id="set-subtitles" type="checkbox"></label>
       </section>
       <section class="settings-group">
-        <h3 data-i18n="settings_playback">Playback</h3>
-        <label class="settings-row"><span data-i18n="settings_default_volume">Default volume</span><input id="set-volume" type="range" min="0" max="100" step="5"></label>
-        <label class="settings-row"><span data-i18n="settings_default_speed">Default speed</span><select id="set-speed"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
-        <label class="settings-row"><span data-i18n="settings_subtitles_default">Subtitles on by default</span><input id="set-subtitles" type="checkbox"></label>
+        <h3>Animation</h3>
+        <label class="settings-row"><span>Reduce motion</span><input id="set-reduce-motion" type="checkbox"></label>
       </section>
       <section class="settings-group">
-        <h3 data-i18n="settings_animation">Animation</h3>
-        <label class="settings-row"><span data-i18n="settings_reduce_motion">Reduce motion</span><input id="set-reduce-motion" type="checkbox"></label>
+        <h3>Welcome screen</h3>
+        <select id="set-welcome"><option value="always">Show on every launch</option><option value="once">Show once per session</option></select>
       </section>
       <section class="settings-group">
-        <h3 data-i18n="settings_welcome">Welcome screen</h3>
-        <select id="set-welcome"><option value="always" data-i18n="settings_welcome_always">Show on every launch</option><option value="once" data-i18n="settings_welcome_once">Show once per session</option></select>
-      </section>
-      <section class="settings-group">
-        <h3 data-i18n="settings_teacher_shortcut">Reading mode shortcut</h3>
+        <h3>Reading mode shortcut</h3>
         <select id="set-teacher-key"><option value="KeyT">T</option><option value="F2">F2</option><option value="none">—</option></select>
       </section>
       <section class="settings-group">
-        <h3 data-i18n="settings_reading_page">Reading page (optional URL)</h3>
+        <h3>Reading page (optional URL)</h3>
         <input id="set-reading-page" type="url" placeholder="https://…">
       </section>
-      <section class="settings-group" id="settings-media" hidden>
-        <h3 data-i18n="settings_media_folders">Media folders</h3>
-        <p class="modal__hint" data-i18n="settings_media_folders_hint">One folder per line.</p>
-        <textarea id="set-media-folders" rows="3"></textarea>
+      <section class="settings-group">
+        <h3>Media folder</h3>
+        <p class="modal__hint">Folder name inside the project, or an absolute path. Default: contents. Changes apply after the scan finishes.</p>
+        <input id="set-media-root" type="text" placeholder="contents">
+      </section>
+      <section class="settings-group">
+        <h3>Change password</h3>
+        <label class="settings-row"><span>Current password</span><input id="set-current-password" type="password" autocomplete="current-password"></label>
+        <label class="settings-row"><span>New password</span><input id="set-new-password" type="password" minlength="8" autocomplete="new-password"></label>
       </section>
       <p class="form-error" id="settings-error" role="alert" hidden></p>
       <p class="form-status" id="settings-status" hidden></p>
-      <button class="button button--primary" type="submit" data-i18n="settings_save">Save settings</button>
+      <button class="button button--primary" type="submit">Save settings</button>
     </form>
   </dialog>
   <section class="teacher" id="teacher" hidden aria-label="Reading mode">

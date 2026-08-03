@@ -1,17 +1,14 @@
 # Hibiki asset and media policy
 
-Hibiki does not assume or bundle an anime catalog or user media. The application indexes files that the user places in configured local library folders.
+Hibiki does not assume or bundle an anime catalog or user media. The application indexes files that the user places in a single configured media root (default `contents/`), organized into four categories.
 
 ## Repository asset layout
 
 ```text
 assets/
-├── banners/       # optional application or welcome imagery
 ├── fonts/         # locally supplied fonts, if present
 ├── icons/         # project icon assets
 ├── images/        # general application imagery
-├── posters/       # optional artwork used by the application
-├── thumbnails/    # generated or supplied episode previews
 └── vendor/        # vendored open-source assets and version records
     ├── anime/
     ├── lucide/
@@ -22,37 +19,51 @@ The repository currently uses the local Anime.js bundle and Lucide SVG set under
 
 ## User library layout
 
-A recommended local media structure is:
+The filesystem is the single source of truth. The scanner walks one configurable media root (`contents/` by default; changeable in Settings → Media folder) and indexes everything it finds. The four category folders are `Anime`, `Movies`, `Tutorials`, and `Other`; anything outside them is ignored with a warning.
 
 ```text
-media/
-└── Anime Name/
-    ├── poster.webp
-    ├── banner.webp
-    └── Season 01/
-        ├── Episode 01.mp4
-        ├── Episode 01.vtt
-        └── Episode 02.mp4
+contents/
+├── Anime/
+│   └── Jujutsu Kaisan/        # one folder per title
+│       ├── info.json          # optional metadata (title, description, year, genre, studio)
+│       ├── poster.webp        # optional; poster.png/jpg/jpeg work too
+│       ├── banner.webp        # optional
+│       ├── Season 01/         # "Season 1", "S01", or just "1" all work
+│       │   ├── 1.mp4          # episodes: 1, 01 - Title, EP 1, episode 1, E01, S2E5, ...
+│       │   ├── 1.vtt          # optional subtitle (same stem, or a prefix)
+│       │   ├── 1.webp         # optional episode thumbnail (same stem)
+│       │   └── ...
+│       └── Season 02/
+├── Movies/
+│   ├── Your Name.mp4          # a video file directly in the folder is one movie
+│   ├── Your Name.vtt
+│   ├── Your Name.webp         # optional poster/thumbnail (same stem)
+│   └── A Silent Voice/        # or a folder with one video + poster/banner/info.json
+│       ├── movie.mp4
+│       ├── poster.webp
+│       └── info.json
+├── Tutorials/                 # same rules as Movies
+│   └── Guitar Lesson.mp4
+└── Other/                     # same rules as Movies
 ```
 
-The configured library may live outside the repository. Hibiki's backend scanner indexes supported local formats and keeps filesystem access behind the API boundary. Do not commit personal media, credentials, generated databases, logs, or private artwork to the repository.
+Rules:
+
+- **Anime** — each subfolder is a title. Season folders (`Season 1` / `S01` / bare `1`) hold the numbered episodes; videos placed directly in the title folder (no season folder) count as Season 1.
+- **Movies / Tutorials / Other** — each video file directly inside the category folder is one standalone title; a subfolder with one video is a standalone title too (with room for poster/banner/info.json). A folder with several videos uses the video whose stem matches the folder name (else the alphabetically first) and logs a warning.
+- Episode numbers are read from the file name: a leading number (`1`, `01 - Title`) is used first, then `EP 1` / `episode 1` / `E01` / `S2E5` styles; files with no number are ordered by name. Duplicate numbers are reassigned deterministically.
+- Episode titles are cleaned from the file name (`EP 3 - The Fight` → `The Fight`, `E04` → `Episode 4`); `info.json` in an anime folder or standalone folder overrides the title and adds optional fields (`description`, `year`, `genre`, `studio`).
+- The scan is deterministic (alphabetical traversal, fixed category order), incremental (unchanged videos keep their cached metadata via signatures stored in `data/library.json`), and non-blocking (the dashboard scan runs in the background and reports progress through the scan status endpoint). Problems are reported as warnings in the dashboard and `logs/scanner.log` — a missing poster, invalid `info.json`, or an unsupported file never breaks the scan.
+
+The configured media root may live outside the repository (an absolute path in Settings → Media folder). Do not commit personal media, credentials, generated databases, logs, or private artwork to the repository: `contents/` and the generated cache `data/library.json` are gitignored.
 
 ## Imported asset sets (development)
 
-The current development asset set is defined in `docs/CONTENT.md`, which acts as the temporary source of truth for project assets. The following sets were imported from the archive URLs listed there on 2026-08-03:
+The following sets are part of the repository:
 
-- `assets/banners/` — 30 JPeg banner images (~1.9 MB) from `30_banners.zip`. The source archive does not declare a license; treat these as user-supplied artwork pending rights confirmation.
 - `assets/fonts/` — local builds of Anton (regular), Inter (variable), and Noto Sans JP (variable), each shipped with its OFL-1.1 license text. Only the builds required by the design system are committed; the full 79 MB font archive is not part of the repository.
-- Poster images are placed in the user media library at `media/<Anime>/poster.jpg` and, like all user media, are not committed to the repository.
 
-Source archive integrity (for re-acquisition before the temporary tunnel is retired):
-
-- `30_banners.zip` — sha256 `b91d98f24a971a4db7bcba306311ae005e9d5becb1f388454c40e23127c678e8`
-- `Anton,Inter,Noto_Sans_JP.zip` — sha256 `4672ef0925791c79af4c8b5004e5e80c95ba9c279b08e54ea7084ab3f4fba2e0`
-
-The entries seeded in `data/library.json` are metadata-only placeholders: no local video files are imported yet, and placeholder episodes are not playable. Running a library scan regenerates `library.json` from the local `media/` tree, which replaces the placeholders; until local media exists, a scan produces an empty library.
-
-These archives are temporary development sources. Replace them with licensed, versioned sources before any public release.
+Poster and banner images for library titles are placed in the user media root (e.g. `contents/Anime/<Title>/poster.webp`) and, like all user media, are not committed to the repository.
 
 ---
 

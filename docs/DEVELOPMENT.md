@@ -40,10 +40,10 @@ Repository Structure
 ├── assets/
 ├── backend/
 ├── config/
+├── contents/          # user media root (gitignored; created on first run)
 ├── data/
 ├── docs/
 ├── frontend/
-├── media/
 ├── scripts/
 ├── README.md
 └── LICENSE
@@ -118,20 +118,21 @@ Contains:
 
 - JSON
 - SQLite database
-- Localization
 
 ---
 
-media/
+contents/
 
-Local media library.
+Local media library (the user's media root; gitignored).
 
 Contains:
 
+- Category folders (Anime, Movies, Tutorials, Other)
 - Videos
 - Posters
 - Banners
 - Subtitles
+- info.json metadata files
 - Episode thumbnails
 
 ---
