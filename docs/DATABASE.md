@@ -75,11 +75,12 @@ Recommended structure:
 
 data/
 ├── library.json
-├── config.json
 └── localization/
     ├── en.json
     ├── hi.json
     └── ja.json
+
+Application configuration is stored separately at `config/config.json`.
 
 ---
 
@@ -250,9 +251,11 @@ Indexes should improve lookup speed without unnecessary duplication.
 
 File Organization
 
+config/
+└── config.json
+
 data/
 ├── library.json
-├── config.json
 ├── database.db
 └── localization/
 

@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 .tox/
 .nox/
@@ -24,13 +25,23 @@ env/
 
 # Local runtime state
 data/*.db
+data/*.db-journal
 data/*.db-shm
 data/*.db-wal
+*.sqlite
+*.sqlite3
 config/initial-admin.txt
 logs/
+*.log
 
 # User media and generated files
 media/**
+*.tmp
+
+# Environment configuration (secrets)
+.env
+.env.*
+!.env.example
 
 # Operating system
 .DS_Store

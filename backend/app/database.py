@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Iterator
 
 
 MIGRATIONS: tuple[tuple[int, str], ...] = (
@@ -96,10 +95,3 @@ class Database:
                     "INSERT INTO schema_migrations(version, applied_at) VALUES (?, datetime('now'))",
                     (version,),
                 )
-
-    def connection(self) -> Iterator[sqlite3.Connection]:
-        connection = self.connect()
-        try:
-            yield connection
-        finally:
-            connection.close()

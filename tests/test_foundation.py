@@ -1,13 +1,20 @@
+import asyncio
+import json
 import logging
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
+from backend.app.api import LoginPayload
 from backend.app.auth import PasswordHasher
 from backend.app.media import MediaService
 from backend.app.core import Settings
 from backend.app.database import Database
+from backend.app.main import validation_error
 from backend.app.repositories import ActivityRepository, SessionRepository, UserRepository
 from backend.app.scanner import LibraryScanner
 
@@ -114,6 +121,16 @@ class FoundationTests(unittest.TestCase):
                 self.assertIsNone(sessions.get_user("expired-session"))
                 self.assertIsNotNone(sessions.get_user("active-session"))
 
+    def test_validation_error_response_does_not_leak_internals(self):
+        with self.assertRaises(ValidationError) as context:
+            LoginPayload(username="", password="submitted-secret")
+        request_error = RequestValidationError(context.exception.errors())
+        response = asyncio.run(validation_error(None, request_error))
+        body = json.loads(response.body)
+        self.assertFalse(body["success"])
+        self.assertEqual(body["error"]["code"], "VALIDATION_ERROR")
+        self.assertNotIn("backend/app", body["error"]["message"])
+        self.assertNotIn("submitted-secret", body["error"]["message"])
 
 
 if __name__ == "__main__":

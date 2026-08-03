@@ -56,7 +56,11 @@ async def http_error(_: Request, error: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_error(_: Request, error: RequestValidationError):
-    return JSONResponse(status_code=422, content={"success": False, "error": {"code": "VALIDATION_ERROR", "message": str(error)}})
+    details = "; ".join(
+        f"{'.'.join(str(part) for part in item['loc'])}: {item['msg']}"
+        for item in error.errors()
+    )
+    return JSONResponse(status_code=422, content={"success": False, "error": {"code": "VALIDATION_ERROR", "message": details or "Invalid request"}})
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

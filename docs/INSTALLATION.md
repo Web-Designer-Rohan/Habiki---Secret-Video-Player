@@ -79,9 +79,9 @@ Install:
 
 - Python 3.12+
 - Git
-- FFmpeg
+- FFmpeg (optional)
 
-FFmpeg is used for media processing tasks such as thumbnail generation.
+FFmpeg is used for optional media processing tasks such as thumbnail generation, which is planned for a later release. It is not required for the current foundation.
 
 No additional runtime is required for Version 1.
 
@@ -127,7 +127,7 @@ First Startup
 Recommended order:
 
 1. Install Python dependencies.
-2. Verify FFmpeg is available.
+2. Verify FFmpeg is available (optional; only needed once thumbnail generation is implemented).
 3. Launch the backend.
 4. Open Hibiki in the browser.
 5. Create the initial Mochi (Administrator) account.

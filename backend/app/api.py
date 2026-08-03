@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from .auth import current_user, require_mochi
-from .core import AuthenticationError, AuthorizationError
+from .core import AuthenticationError
 from .media import MediaService
 from .repositories import ActivityRepository, UserRepository
 
