@@ -1,9 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
 .venv/
+venv/
+env/
 
 # Local runtime state
-data/database.db
+data/*.db
+data/*.db-shm
+data/*.db-wal
 config/initial-admin.txt
 logs/
 
 # User media and generated files
 media/**
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
