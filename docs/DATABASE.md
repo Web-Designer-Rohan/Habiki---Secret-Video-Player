@@ -50,8 +50,7 @@ Examples:
 - Watch History
 - Favorites
 - Settings
-- Dashboard Authentication
-- Sessions
+- Local password hash
 
 SQLite is selected because it is lightweight, reliable, serverless, and cross-platform.
 
@@ -96,7 +95,7 @@ Version 2 structure:
 Each entry contains:
 
 - Identifier
-- Type (anime | movies | tutorials | other)
+- Type (anime | movies | tutorials | other | tv-shows | courses)
 - Title
 - Poster (path, optional)
 - Banner (path, optional)
@@ -143,20 +142,6 @@ data/database.db
 ---
 
 Tables
-
-users
-
-Stores local users.
-
-Fields include:
-
-- id
-- username
-- password_hash
-- created_at
-- updated_at
-
----
 
 favorites
 
@@ -212,31 +197,9 @@ Examples:
 
 ---
 
-sessions
-
-Stores dashboard sessions.
-
-Fields include:
-
-- session_id
-- created_at
-- expires_at
-
-Version 1 may simplify session handling if appropriate.
-
----
-
 Relationships
 
-Users own:
-
-- Favorites
-- Continue Watching
-- Watch History
-- Settings
-- Sessions
-
-Anime identifiers stored in SQLite reference entries defined in "library.json".
+The local password hash and user activity are stored in SQLite. Media entry identifiers stored in SQLite reference entries defined in `library.json`; dangling references are removed by dashboard maintenance.
 
 ---
 
@@ -274,17 +237,19 @@ contents/                 # configurable media root (default "contents")
 │       ├── poster.webp   # optional
 │       ├── banner.webp   # optional
 │       ├── Season 01/    # "Season 1", "S01", or "1" all work
-│       │   ├── 1.mp4     # episodes: 1, EP 1, episode 1, E01, S2E5, or unnamed
+│       │   ├── 1.mp4     # any supported video extension; names: 1, EP 1, E01, or unnamed
 │       │   ├── 1.vtt     # optional subtitle
 │       │   └── 1.webp    # optional episode thumbnail
 │       └── Season 02/
 ├── Movies/               # one video per title (direct file or folder)
 ├── Tutorials/            # same rules as Movies
-└── Other/                # same rules as Movies
+├── Other/                # same rules as Movies
+├── TV Shows/             # same standalone rules
+└── Courses/              # same standalone rules
 
 The scanner builds the library from this tree deterministically:
 - Anime: title folders with numbered seasons/episodes.
-- Movies/Tutorials/Other: each video file (or single-video folder) is one
+- Movies/Tutorials/Other/TV Shows/Courses: each video file (or single-video folder) is one
   standalone title; standalone entries are playable as a single episode.
 The scan runs in the background (POST /dashboard/library/scan, progress via
 GET /dashboard/scan/status) and is incremental via the signature map.

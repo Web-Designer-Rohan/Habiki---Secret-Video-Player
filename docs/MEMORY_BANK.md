@@ -101,7 +101,7 @@ Icons
 
 Library
 
-Lucide
+Text-first controls
 
 Icons should remain minimal and never replace readable text.
 

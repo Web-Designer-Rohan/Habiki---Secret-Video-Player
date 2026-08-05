@@ -1,555 +1,261 @@
-API.md
+# Hibiki REST API
 
 ---
 
 title: REST API Specification
 project: Hibiki
 version: 1.0.0
-status: Draft
+status: Active
 owner: Rohan
-last_updated: 2026-08-02
+last_updated: 2026-08-05
 
-Hibiki REST API
+## Purpose
 
-Purpose
+This document describes the API implemented by the Hibiki backend. The
+frontend communicates with the backend; it never reads the filesystem or
+SQLite database directly.
 
-This document defines the REST API exposed by the Hibiki backend.
+Base URL: `http://localhost:8000/api/v1/`
 
-The frontend communicates exclusively through these endpoints.
+Successful JSON responses use:
 
-The frontend must never access the filesystem or database directly.
+```json
+{"success": true, "data": {}}
+```
 
----
+Expected errors use:
 
-Design Principles
+```json
+{"success": false, "error": {"code": "ERROR_CODE", "message": "Human readable message"}}
+```
 
-The API should be:
+File and image routes return a local file response instead of JSON.
 
-- RESTful
-- Versioned
-- Stateless
-- Predictable
-- Consistent
-- Well documented
+## Security contract
 
-All endpoints return JSON unless explicitly stated otherwise. Indexed media file and subtitle routes return local file responses and are only reachable through `/player/source/{episodeId}` references.
+Every response includes:
 
----
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Referrer-Policy: no-referrer`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Content Security Policy limiting resources to the application origin, with
+  `frame-src http: https:` for the configured Teacher Mode reading page.
 
-Base URL
+State-changing requests that include an `Origin` header must match the request
+`Host`; otherwise the API returns `403 CROSS_ORIGIN_DENIED`. Requests without
+an `Origin` header remain compatible with local command-line clients.
 
-http://localhost:8000/api/v1/
+The application uses one local password gate. Passwords are hashed with
+Python `scrypt`; failed unlock attempts are rate limited to five attempts per
+client in a 15-minute window. The password hash is never exposed by the
+settings API. Administrative and activity routes require the application to
+be unlocked.
 
-The host and port should be configurable.
+## Health and version
 
----
+### `GET /health`
 
-Standard Response
+Returns backend health and whether the database file exists. No unlock is
+required.
 
-Successful response:
+### `GET /version`
 
+Returns `{ "name": "Hibiki", "version": "1.0.0" }`. No unlock is required.
+
+## Authentication
+
+### `GET /auth/status`
+
+Returns whether the current process is unlocked.
+
+### `POST /auth/unlock`
+
+Unlocks the local application.
+
+Request:
+
+```json
+{"password": "..."}
+```
+
+Returns `401` for an incorrect password and `429` after the rate limit is
+exceeded.
+
+### `PUT /auth/password`
+
+Requires an unlocked application and verifies the current password before
+storing a new `scrypt` hash.
+
+Request:
+
+```json
+{"current_password": "...", "new_password": "at-least-8-characters"}
+```
+
+Returns `401` if the application is locked or the current password is wrong.
+
+## Library
+
+### `GET /library`
+
+Returns the public library. Optional query parameters:
+
+- `query` — case-insensitive title, episode, number, or season search
+- `category` — `all`, `anime`, `movies`, `tutorials`, `other`, `tv-shows`, or
+  `courses`
+- `sort` — `default`, `recent`, or `title`
+
+Unsupported category or sort values return `422`. Local filesystem paths are
+removed from public metadata.
+
+### `GET /library/search`
+
+Compatibility alias of `GET /library` with the same query parameters.
+
+### `GET /library/{entryId}`
+
+Returns one public library entry or `404`.
+
+### `GET /library/{entryId}/seasons`
+
+Returns the entry's seasons or an empty list for standalone titles.
+
+### `GET /library/{entryId}/episodes`
+
+Returns all episodes for an entry. Standalone titles expose one episode.
+
+### `GET /library/{entryId}/poster`
+
+Serves an indexed poster image after validating that it remains inside the
+configured media root. Returns `404` when absent.
+
+### `GET /library/{entryId}/banner`
+
+Serves an indexed title banner with the same root validation as posters.
+
+### `GET /banners`
+
+Returns application welcome-banner URLs. This decorative endpoint does not
+require unlock.
+
+## Playback
+
+### `GET /player/source/{episodeId}`
+
+Returns the episode-specific media URL, thumbnail URL, and subtitle URLs. A
+metadata-only or missing episode returns `404` instead of an internal error.
+
+### `GET /player/file/{episodeId}`
+
+Streams an indexed file after checking its path, existence, and extension.
+The scanner recognizes these video extensions:
+
+`.mp4`, `.mkv`, `.webm`, `.avi`, `.mov`, `.m4v`, `.flv`, `.mpeg`, `.ts`,
+`.m3u8`
+
+Browser playback support varies by platform and codec.
+
+### `GET /player/thumbnail/{episodeId}`
+
+Serves an indexed episode thumbnail. If it is missing, the route falls back
+to the title poster and finally to a local SVG play placeholder.
+
+### `GET /player/subtitle/{episodeId}/{subtitleIndex}`
+
+Serves an indexed WebVTT subtitle after validating the episode and path.
+
+### `POST /player/progress`
+
+Requires unlock. Saves playback progress and supports `completed: true` for
+moving an episode to watch history.
+
+Request fields:
+
+```json
 {
-  "success": true,
-  "data": {}
+  "episode_id": "show-s01-e01",
+  "anime_id": "show",
+  "season_number": 1,
+  "episode_number": 1,
+  "playback_position": 42.0,
+  "completed": false
 }
+```
 
----
+### `GET /player/progress/{episodeId}`
 
-Error response:
+Requires unlock. Returns saved progress or a zero position.
 
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human readable message"
-  }
-}
+## Activity
 
----
+All activity routes require unlock.
 
-HTTP Status Codes
+- `GET /continue` — list Continue Watching items.
+- `DELETE /continue/{episodeId}` — remove one Continue Watching item.
+- `GET /favorites` — list favorites.
+- `POST /favorites/{entryId}` — add a favorite; an optional `{ "enabled": false }` body disables it.
+- `DELETE /favorites/{entryId}` — remove a favorite.
+- `GET /history` — list watch history.
+- `DELETE /history` — clear watch history.
 
-Use standard HTTP status codes.
+## Settings
 
-Examples:
+All settings routes require unlock.
 
-Code| Meaning
-200| Success
-201| Resource Created
-204| No Content
-400| Invalid Request
-401| Authentication Required
-403| Permission Denied
-404| Resource Not Found
-409| Conflict
-422| Validation Error
-429| Rate Limited
-500| Internal Server Error
+### `GET /settings`
 
----
+Returns the persisted setting key/value pairs. Password hashes are excluded.
 
-Security
+### `PUT /settings`
 
-Every response carries hardening headers:
+Updates the allowed settings and persists values as strings. Unknown keys are
+dropped. Supported keys are:
 
-- X-Content-Type-Options: nosniff
-- X-Frame-Options: SAMEORIGIN
-- Referrer-Policy: no-referrer
-- Permissions-Policy: camera=(), microphone=(), geolocation=()
-- Content-Security-Policy: default-src 'self'; frame-src http: https: (Teacher Mode iframe)
+- `theme`
+- `default_volume` (`0`–`100`)
+- `default_speed` (`0.25`–`4`)
+- `subtitles_default`
+- `reduce_motion`
+- `welcome_screen`
+- `teacher_shortcut`
+- `reading_page` (empty, an HTTP(S) URL, or a relative path)
 
-State-changing requests (POST / PUT / PATCH / DELETE) that include an Origin
-header are rejected with 403 CROSS_ORIGIN_DENIED unless the origin matches the
-Host header. Requests without an Origin header are unaffected.
+## Dashboard
 
-The login endpoint enforces a sliding-window rate limit: after 5 failed
-attempts per username and client address, further attempts return
-429 RATE_LIMITED until the oldest failure leaves the 15-minute window. A
-successful login resets the counter.
+Dashboard routes require unlock.
 
-Expired sessions are pruned at startup and on every login and logout.
+- `GET /dashboard` — confirms dashboard availability.
+- `GET /dashboard/status` — returns category, episode, poster, banner, and database statistics.
+- `GET /dashboard/config` — returns the configured `media_root`.
+- `POST /dashboard/config` — validates, persists, and asynchronously scans a relative or absolute media root.
+- `GET /dashboard/library` — returns raw local library metadata for administration; this is not a public browsing response.
+- `PATCH /dashboard/anime/{entryId}` — writes title metadata to the entry's `info.json` and updates the cache.
+- `POST /dashboard/database/refresh` — checks SQLite integrity and removes dangling activity references.
+- `POST /dashboard/library/scan` — starts a background filesystem scan and returns its state.
+- `GET /dashboard/scan/status` — returns scan status, timestamps, counts, and bounded warnings.
 
----
+The scan is non-blocking. Poll `/dashboard/scan/status` until `status` is
+`idle` or `error`; no browser refresh is required.
 
-Authentication
+## Media organization
 
-POST
+The scanner uses one configurable root with these category folders:
 
-/auth/login
+`Anime`, `Movies`, `Tutorials`, `Other`, `TV Shows`, and `Courses`.
 
-Authenticate a local user.
+Anime folders support seasons and numbered episodes. The other categories
+index standalone videos. Unsupported files are skipped with warnings; scans
+do not fail because a folder contains invalid or unrelated files.
 
----
+## Validation and status codes
 
-POST
+- `200` — success
+- `401` — unlock required or invalid password
+- `403` — cross-origin or authorization failure
+- `404` — missing or unavailable resource
+- `422` — invalid payload or query value
+- `429` — unlock rate limit exceeded
 
-/auth/logout
-
-Terminate the current session.
-
----
-
-GET
-
-/auth/session
-
-Return the currently authenticated user.
-
----
-
-Users
-
-GET
-
-/users/me
-
-Return the current user profile.
-
----
-
-GET
-
-/users
-
-Administrator only.
-
-Return all local users.
-
----
-
-POST
-
-/users
-
-Administrator only.
-
-Create a new local user.
-
----
-
-DELETE
-
-/users/{id}
-
-Administrator only.
-
-Remove a local user.
-
----
-
-Library
-
-GET
-
-/library
-
-Return the media library. Optional parameters:
-
-- query — matches entry titles, episode titles/numbers, and season numbers (case-insensitive)
-- category — `all` (default), `anime`, `movies`, `tutorials`, `other`
-- sort — `default` (canonical category order), `recent` (newest scanned first), `title` (A–Z)
-
-Unsupported category/sort values return 422. Local filesystem paths are never returned; episodes carry no file paths in the public payload.
-
----
-
-GET
-
-/library/{animeId}
-
-Return information for a single entry (anime, movie, tutorial, or other).
-
----
-
-GET
-
-/library/{animeId}/seasons
-
-Return available seasons.
-
----
-
-GET
-
-/library/{animeId}/episodes
-
-Return available episodes.
-
----
-
-GET
-
-/library/search
-
-Alias of GET /library; accepts the same query / category / sort parameters.
-
----
-
-Playback
-
-GET
-
-/player/source/{episodeId}
-
-Return media information required for playback. The response contains episode-specific file and subtitle routes; local filesystem paths are never returned.
-
-GET
-
-/player/file/{episodeId}
-
-Stream an indexed MP4 episode after validating its configured library root.
-
-GET
-
-/player/subtitle/{episodeId}/{subtitleIndex}
-
-Return an indexed WebVTT subtitle file.
-
-Metadata-only placeholder entries (created before media is scanned in, see ASSETS.md) have no indexed file. For these, `/player/source` and `/player/file` return 404 with `Episode media is not available locally` until a library scan indexes real media.
-
----
-
-POST
-
-/player/progress
-
-Save playback progress. Positive positions update Continue Watching; `completed: true` adds Watch History and removes the Continue Watching item.
-
----
-
-GET
-
-/player/progress/{episodeId}
-
-Return saved playback progress.
-
----
-
-Continue Watching
-
-GET
-
-/continue
-
-Return Continue Watching items.
-
----
-
-DELETE
-
-/continue/{episodeId}
-
-Remove an item from Continue Watching.
-
----
-
-Banners
-
-GET
-
-/banners
-
-Return the application banner collection as public asset URLs (decorative; no authentication).
-
----
-
-Posters
-
-GET
-
-/library/{animeId}/poster
-
-Serve an indexed poster image after root validation (D-015). Returns 404 when the entry has no indexed poster.
-
----
-
-GET
-
-/library/{animeId}/banner
-
-Serve an indexed banner image after root validation. Returns 404 when the entry has no indexed banner.
-
----
-
-Favorites
-
-GET
-
-/favorites
-
-Return favorite anime.
-
----
-
-POST
-
-/favorites/{animeId}
-
-Add favorite.
-
----
-
-DELETE
-
-/favorites/{animeId}
-
-Remove favorite.
-
----
-
-Watch History
-
-GET
-
-/history
-
-Return watch history.
-
----
-
-DELETE
-
-/history
-
-Clear watch history.
-
----
-
-Dashboard
-
-Administrator only.
-
-GET
-
-/dashboard
-
-Return dashboard information.
-
----
-
-GET
-
-/dashboard/status
-
-Return library and system statistics (anime, movies, tutorials, other, episodes, posters, banners, database size).
-
----
-
-GET
-
-/dashboard/config
-
-Return the current application configuration (media_root).
-
----
-
-POST
-
-/dashboard/config
-
-Update the media root (a relative folder name or an absolute path; invalid values return 422). Persists to config.json and starts a background scan of the new root.
-
----
-
-GET
-
-/dashboard/library
-
-Return the raw library metadata including local paths (administrator management only; paths never cross the public API boundary).
-
----
-
-PATCH
-
-/dashboard/anime/{animeId}
-
-Edit metadata (title, description, year, genre, studio). The edit is written to the title's `info.json` (the filesystem source of truth) and applied to the cached library immediately, so a rescan keeps it.
-
----
-
-POST
-
-/dashboard/database/refresh
-
-Run a database integrity check, foreign-key check, and prune dangling anime/episode references.
-
----
-
-POST
-
-/dashboard/library/scan
-
-Start a background library scan. Returns the scan state (`scanning`); it does not block. Poll GET /dashboard/scan/status until the state leaves `scanning`.
-
----
-
-GET
-
-/dashboard/scan/status
-
-Return the current scan state: status (`idle` | `scanning` | `error`), started/finished timestamps, entry and episode counts, and up to 100 warnings (missing assets, invalid names, duplicate numbers, misplaced files). Warnings never fail the scan.
-
----
-
-POST
-
-/dashboard/thumbnails
-
-Generate missing thumbnails. Currently returns guidance to run scripts/generate_thumbnails.py; generated thumbnails are discovered by the scanner.
-
----
-
-Settings
-
-GET
-
-/settings
-
-Return current settings.
-
----
-
-PUT
-
-/settings
-
-Update settings. Unknown setting keys are silently dropped; only the allowed keys (`theme`, `default_volume`, `default_speed`, `subtitles_default`, `reduce_motion`, `welcome_screen`, `teacher_shortcut`, `reading_page`) are stored.
-
----
-
-Health
-
-GET
-
-/health
-
-Return backend health information.
-
-Used by diagnostics.
-
----
-
-Version
-
-GET
-
-/version
-
-Return application version information.
-
----
-
-Permissions
-
-Mochi
-
-Full access.
-
-Can access every endpoint.
-
----
-
-E-Mochi
-
-Limited access.
-
-Cannot:
-
-- Create users
-- Delete users
-- Change application configuration
-- Manage library
-- Run maintenance tools
-
----
-
-Validation
-
-Every endpoint should validate:
-
-- Input
-- Required fields
-- Permissions
-- Resource existence
-
-Invalid requests should return descriptive error messages.
-
----
-
-Rate Limiting
-
-Version 1 operates locally.
-
-Traditional rate limiting is unnecessary.
-
-However, endpoints should still protect against accidental rapid repeated requests where appropriate.
-
----
-
-Future API
-
-Potential future endpoints:
-
-- Metadata import
-- Plugin API
-- Theme API
-- Diagnostics API
-- Backup API
-- Collection management
-
-These are outside the scope of Version 1.
-
----
-
-API Principles
-
-Every endpoint should satisfy the following:
-
-- Clear purpose
-- Consistent naming
-- Predictable responses
-- Proper validation
-- Secure authorization
-- Comprehensive error handling
-
-The API should remain stable so the frontend can evolve independently from the backend implementation.
+Validation errors use `VALIDATION_ERROR` and do not expose local source paths,
+stack traces, submitted secrets, or other implementation details.

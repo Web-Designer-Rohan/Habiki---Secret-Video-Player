@@ -108,7 +108,7 @@ The backend is responsible for:
 - Watch history
 - Favorites
 - Continue Watching
-- Thumbnail generation
+- Thumbnail discovery and fallback handling
 - File validation
 - JSON management
 - SQLite operations
@@ -140,7 +140,7 @@ Examples:
 - Watch history
 - Continue Watching
 - Favorites
-- Dashboard credentials
+- Local settings and the password hash
 - User preferences
 
 ---
@@ -166,7 +166,9 @@ contents/                    # configurable media root (default "contents")
  │         └── Season 02/
  ├── Movies/                  # one video per title (direct file or folder)
  ├── Tutorials/               # same rules as Movies
- └── Other/                   # same rules as Movies
+ ├── Other/                   # same rules as Movies
+ ├── TV Shows/                # same standalone rules
+ └── Courses/                 # same standalone rules
 
 The scanner walks this tree and builds data/library.json as a cache.
 
@@ -176,7 +178,7 @@ The scanner walks this tree and builds data/library.json as a cache.
 
 The scanner (backend/app/scanner.py) is responsible for:
 
-- Discovering media (Anime/Movies/Tutorials/Other categories)
+- Discovering media (Anime/Movies/Tutorials/Other/TV Shows/Courses categories)
 - Parsing episode numbers and cleaning titles
 - Reading optional info.json metadata and poster/banner images
 - Writing the versioned library.json cache
@@ -231,11 +233,11 @@ Version 1 uses local authentication only.
 Requirements:
 
 - Password hashing
-- Session validation
+- Unlock state validation
 - Protected routes
 - No plaintext passwords
 
-No online authentication exists in Version 1.
+Authentication is an in-process local password gate; no online accounts or persisted sessions exist in Version 1.
 
 ---
 

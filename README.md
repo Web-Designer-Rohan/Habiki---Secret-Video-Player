@@ -34,9 +34,9 @@ Features
 Media
 
 - Filesystem-driven library (single media root, default `contents/`)
-- Automatic categories: Anime / Movies / Tutorials / Other
+- Automatic categories: Anime / Movies / Tutorials / Other / TV Shows / Courses
 - Seasons and episodes (Anime)
-- Standalone titles with one-click play (Movies / Tutorials / Other)
+- Standalone titles with one-click play (Movies / Tutorials / Other / TV Shows / Courses)
 - Posters, banners, and episode thumbnails
 - Optional info.json metadata (title, description, year, genre, studio)
 - Incremental background scans with warnings
@@ -108,13 +108,9 @@ Storage
 
 Media
 
-- MP4
-- WebVTT
-- WebP
-
-Icons
-
-- Lucide Icons
+- MP4, MKV, WebM, AVI, MOV, M4V, FLV, MPEG, TS, M3U8 (browser support varies)
+- WebVTT subtitles
+- WebP, PNG, JPEG artwork
 
 Typography
 
@@ -170,7 +166,7 @@ Hibiki is local-first and designed to work offline after setup. Continue Watchin
 
 Third-party acknowledgements
 
-Hibiki vendors Anime.js 4.5.0 and Lucide 1.28.0 locally and uses Python, FastAPI, Uvicorn, Pydantic, SQLite, and optional FFmpeg tooling. Licenses, versions, purposes, and distribution notes are listed in `docs/ATTRIBUTION.md` and `assets/vendor/VERSIONS.md`.
+Hibiki vendors Anime.js 4.5.0 locally and uses Python, FastAPI, Uvicorn, Pydantic, SQLite, and optional FFmpeg tooling. Licenses, versions, purposes, and distribution notes are listed in `docs/ATTRIBUTION.md` and `assets/vendor/VERSIONS.md`.
 
 ---
 
@@ -180,7 +176,7 @@ Current Phase
 
 Release 1.0 — complete
 
-The filesystem library (Anime / Movies / Tutorials / Other categories under a configurable media root), the background scanner with warnings and incremental rebuilds, the API, the custom player, activity persistence, metadata editing, Teacher Mode, and the dashboard are implemented, tested, and documented.
+The filesystem library (Anime / Movies / Tutorials / Other / TV Shows / Courses categories under a configurable media root), the background scanner with warnings and incremental rebuilds, the API, the custom player, activity persistence, metadata editing, Teacher Mode, and the dashboard are implemented, tested, and documented.
 
 ---
 
@@ -194,7 +190,7 @@ v1.0.0 — Final media library integration and release
 
 License
 
-Hibiki is licensed under the GNU Affero General Public License, version 3 or later. See `LICENSE` for the complete terms. The AGPL was chosen to keep this self-hosted application modifiable and shareable, including source-sharing expectations for modified network-accessible versions, while preserving offline use.
+Hibiki is licensed under the MIT License. See `LICENSE` for the complete terms.
 
 ---
 

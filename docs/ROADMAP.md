@@ -48,7 +48,7 @@ Progress
 - ✅ Engineering guidelines completed
 - ✅ Backend foundation implemented
 - ✅ Single-password local authentication implemented
-- ✅ Filesystem library scanner implemented (Anime/Movies/Tutorials/Other categories, posters, banners, subtitles, info.json metadata)
+- ✅ Filesystem library scanner implemented (Anime/Movies/Tutorials/Other/TV Shows/Courses categories, posters, banners, subtitles, info.json metadata)
 - ✅ Deterministic, incremental, non-blocking library scans with warnings
 - ✅ Versioned REST API foundation implemented
 - ✅ Frontend shell and custom player foundation implemented
@@ -58,7 +58,7 @@ Progress
 - ✅ Dashboard management and metadata editing (persisted to info.json)
 - ✅ Teacher Mode and Settings (media root configuration)
 - ✅ Welcome experience (random banner, swipe-up)
-- ⏳ In-app thumbnail generation (available via scripts/generate_thumbnails.py; dashboard endpoint returns guidance until FFmpeg-based generation is wired in-app)
+- ✅ Thumbnail generation utility available via `scripts/generate_thumbnails.py`; generated images are discovered by the scanner and served with poster/placeholder fallbacks.
 
 ---
 

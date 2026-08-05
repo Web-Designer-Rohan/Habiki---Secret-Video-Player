@@ -5,7 +5,7 @@ INSTALLATION.md
 title: Installation Guide
 project: Hibiki
 version: 1.0.0
-status: Draft
+status: Active
 owner: Rohan
 last_updated: 2026-08-02
 
@@ -81,7 +81,7 @@ Install:
 - Git
 - FFmpeg (optional)
 
-FFmpeg is used for optional media processing tasks such as thumbnail generation, which is planned for a later release. It is not required for the current foundation.
+FFmpeg is used for optional thumbnail generation. It is not required for scanning or playback of browser-supported formats.
 
 No additional runtime is required for Version 1.
 
@@ -121,7 +121,9 @@ contents/
 ├── Anime/
 ├── Movies/
 ├── Tutorials/
-└── Other/
+├── Other/
+├── TV Shows/
+└── Courses/
 
 Add media per the rules in docs/ASSETS.md, then run a library scan from the
 dashboard; the scan runs in the background and indexes everything
@@ -134,10 +136,10 @@ First Startup
 Recommended order:
 
 1. Install Python dependencies.
-2. Verify FFmpeg is available (optional; only needed once thumbnail generation is implemented).
+2. Verify FFmpeg is available if you want to generate thumbnails (optional).
 3. Launch the backend.
 4. Open Hibiki in the browser.
-5. Create the initial Mochi (Administrator) account.
+5. Retrieve the generated bootstrap password from `config/initial-admin.txt` and unlock the application.
 6. Configure the media library location.
 7. Run the first library scan.
 
@@ -149,10 +151,9 @@ Updating the Library
 
 Whenever new media is added:
 
-1. Place media inside the library.
-2. Run the library scan.
-3. Allow thumbnail generation to complete.
-4. Refresh the application.
+1. Place media inside the configured library root.
+2. Run the library scan from the dashboard.
+3. Wait for the scan status to return to `idle`; the library updates without a page refresh.
 
 ---
 
@@ -228,9 +229,9 @@ Login problems
 
 Verify:
 
-- Mochi account exists.
-- Correct credentials are used.
-- Database file is accessible.
+- The bootstrap password was retrieved from `config/initial-admin.txt`.
+- The application is unlocked with the correct password.
+- The database file is accessible.
 
 ---
 
@@ -238,7 +239,7 @@ Supported Media
 
 Video
 
-- MP4 (Primary)
+- MP4, MKV, WebM, AVI, MOV, M4V, FLV, MPEG, TS, M3U8 (browser support varies)
 
 Images
 
@@ -248,15 +249,15 @@ Images
 
 Subtitles
 
-- WebVTT (.vtt)
+- WebVTT (.vtt) subtitles
 
-Additional formats may be considered in future releases.
+Browser support for individual video formats varies by platform; unsupported files are skipped safely by the scanner.
 
 ---
 
 Security Notes
 
-- Keep the Mochi account password secure.
+- Keep the local application password secure and delete `config/initial-admin.txt` after unlocking.
 - Do not manually edit the SQLite database while Hibiki is running.
 - Back up important data before upgrading.
 

@@ -127,7 +127,7 @@ Local media library (the user's media root; gitignored).
 
 Contains:
 
-- Category folders (Anime, Movies, Tutorials, Other)
+- Category folders (Anime, Movies, Tutorials, Other, TV Shows, Courses)
 - Videos
 - Posters
 - Banners

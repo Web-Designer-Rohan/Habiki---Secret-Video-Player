@@ -93,11 +93,7 @@ These should remain subtle and should never overpower the primary red accent.
 
 Theme
 
-Version 1 supports one theme only.
-
-Dark Theme
-
-Future versions may introduce additional themes.
+Version 1 ships with Hibiki Dark plus six alternate color themes: AMOLED, Nord, Tokyo Night, Catppuccin Mocha, Dracula, and Gruvbox.
 
 ---
 
@@ -127,9 +123,9 @@ Typography Rules
 
 Iconography
 
-Icon Library
+Iconography
 
-Lucide
+Hibiki uses text labels and lightweight Unicode controls where appropriate; no runtime icon library is required.
 
 Rules
 
@@ -177,7 +173,7 @@ Each background should include:
 - Dark overlay
 - Bottom-to-top black gradient
 - Slight brightness reduction
-- Smooth fade when changing between sessions
+- Smooth fade when changing between library views
 
 Backgrounds should never reduce readability.
 

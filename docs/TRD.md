@@ -66,13 +66,11 @@ Data Storage
 
 Media Formats
 
-- MP4
-- WebP
+- MP4, MKV, WebM, AVI, MOV, M4V, FLV, MPEG, TS, M3U8 (browser support varies)
+- WebP, PNG, JPEG
 - WebVTT
 
 Icons
-
-- Lucide
 
 Typography
 
@@ -129,11 +127,11 @@ Supported formats:
 
 Video
 
-- MP4
+- MP4, MKV, WebM, AVI, MOV, M4V, FLV, MPEG, TS, M3U8 (browser support varies)
 
 Images
 
-- WebP
+- WebP, PNG, JPEG
 
 Subtitles
 
@@ -243,7 +241,7 @@ Application configuration should be centralized and externalized.
 
 Configuration should include:
 
-- Media root (single folder containing Anime / Movies / Tutorials / Other)
+- Media root (single folder containing Anime / Movies / Tutorials / Other / TV Shows / Courses)
 - Language preferences
 - Player preferences
 - Dashboard settings

@@ -25,19 +25,9 @@ Decisions should never be silently replaced. If a decision changes, add a new en
 
 Decision Format
 
-Every new decision should follow this structure:
-
-## D-XXX
-
-Date:
-Status:
-Category:
-
-Decision:
-
-Reason:
-
-Consequences:
+Every new decision should record its date, status, category, decision,
+reason, and consequences. New decisions are appended; accepted changes do
+not silently replace earlier decisions.
 
 ---
 
@@ -324,15 +314,15 @@ Icons
 
 Decision
 
-Lucide will be the primary icon library.
+The interface will prefer lightweight text and Unicode controls where an icon library is not necessary.
 
 Reason
 
-Lucide is lightweight, consistent, open source, and well suited to the project's minimal visual style.
+Avoiding an unused icon dependency keeps the offline bundle smaller and the interface easier to maintain.
 
 Consequences
 
-New icons should come from Lucide unless a compelling exception exists.
+New controls should remain understandable without decorative icon dependencies.
 
 ---
 
@@ -446,15 +436,15 @@ Security and Dependencies
 
 Decision
 
-Local passwords use Python's standard-library scrypt hashing, and authenticated sessions use cryptographically random opaque tokens stored in SQLite and delivered through HttpOnly, SameSite cookies.
+The local application password uses Python's standard-library scrypt hashing. Unlock state is held in process memory and is not persisted as a browser session.
 
 Reason
 
-Hibiki is local-only and intentionally dependency-light. This provides password hashing and revocable sessions without adding a JWT or authentication framework dependency.
+Hibiki is local-only and intentionally dependency-light. A process-local unlock gate protects administrative and activity routes without adding a JWT, session store, or authentication framework dependency.
 
 Consequences
 
-Session cleanup, expiry, and role checks remain backend responsibilities. Password parameters must remain consistent with the implementation and should be reviewed if deployment targets change.
+The application starts locked after each process restart. Password parameters must remain consistent with the implementation and should be reviewed if deployment targets change.
 
 ---
 
@@ -502,11 +492,11 @@ Legal and Privacy
 
 Decision
 
-Hibiki is released under the GNU Affero General Public License, version 3 or later, with dedicated in-application Legal, Privacy, Attribution, and About surfaces. The current application stores library metadata, local authentication records, settings, Continue Watching, Favorites, and Watch History on the user's device and does not include analytics, advertising, cloud synchronization, telemetry, or user tracking.
+Hibiki is released under the MIT License, with dedicated in-application Legal, Privacy, and Attribution surfaces. The current application stores library metadata, local authentication records, settings, Continue Watching, Favorites, and Watch History on the user's device and does not include analytics, advertising, cloud synchronization, telemetry, or user tracking.
 
 Reason
 
-AGPL-3.0-or-later preserves the ability to study, modify, and share this self-hosted application, including source-sharing expectations for modified network-accessible versions. Clear local privacy notices and attribution links are required for an application with an interactive web interface and vendored open-source assets.
+The MIT License provides a permissive release suitable for local and self-hosted use. Clear local privacy notices and third-party attribution remain required for an application with an interactive web interface and bundled assets.
 
 Consequences
 
@@ -530,7 +520,7 @@ Library and Storage
 
 Decision
 
-Version 1 replaces the hand-maintained library with a filesystem-driven model. A single configurable media root (default `contents/`) organizes media into four automatic categories — Anime, Movies, Tutorials, Other. The scanner produces a deterministic library.json v2 cache (`entries` + `signatures` keyed by path → [mtime_ns, size]) and supports incremental rebuilds, background scanning with a status endpoint, and warning collection that never fails the scan. `info.json` sidecar files are the source of truth for title, description, year, genre, and studio metadata; edited metadata is written back to `info.json`. Standalone titles (Movies / Tutorials / Other) map to one video per title; Anime maps to seasons and episodes.
+Version 1 replaces the hand-maintained library with a filesystem-driven model. A single configurable media root (default `contents/`) organizes media into six automatic categories — Anime, Movies, Tutorials, Other, TV Shows, Courses. The scanner produces a deterministic library.json v2 cache (`entries` + `signatures` keyed by path → [mtime_ns, size]) and supports incremental rebuilds, background scanning with a status endpoint, and warning collection that never fails the scan. `info.json` sidecar files are the source of truth for title, description, year, genre, and studio metadata; edited metadata is written back to `info.json`. Standalone titles (Movies / Tutorials / Other / TV Shows / Courses) map to one video per title; Anime maps to seasons and episodes.
 
 Reason
 
