@@ -8,10 +8,8 @@ from typing import Any
 from fastapi import HTTPException
 
 from .core import Settings, write_json
+from .media_formats import MEDIA_TYPES
 from .scanner import CATEGORY_TYPES, IMAGE_EXTENSIONS, LibraryScanner, ScanState
-
-
-MEDIA_TYPES = {".mp4": "video/mp4", ".vtt": "text/vtt"}
 
 VALID_CATEGORIES = {"all", *CATEGORY_TYPES}
 VALID_SORTS = {"default", "title", "recent"}
@@ -22,7 +20,7 @@ def filter_library(library_data: dict[str, Any], query: str = "", category: str 
 
     - ``query`` matches entry titles, episode titles/numbers, and season
       numbers (case-insensitive).
-    - ``category`` is one of "all", "anime", "movies", "tutorials", "other".
+    - ``category`` is one of "all", "anime", "movies", "tutorials", "other", "tv-shows", "courses".
     - ``sort_by`` is "default" (canonical order), "title", or "recent"
       (reverse canonical order: newest scanned entries first).
 
@@ -190,7 +188,7 @@ class MediaService:
 
     def validated_path(self, path: str, allowed_extensions: set[str] | None = None) -> Path:
         candidate = Path(path).expanduser().resolve()
-        root = self.settings.media_dir
+        root = self.settings.media_dir.resolve()
         if candidate != root and root not in candidate.parents:
             raise HTTPException(status_code=404, detail="Media file is outside the configured media root")
         extensions = allowed_extensions or set(MEDIA_TYPES)

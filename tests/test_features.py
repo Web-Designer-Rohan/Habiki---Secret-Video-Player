@@ -308,6 +308,21 @@ class ScannerCategoryTests(unittest.TestCase):
             self.assertEqual(ids, {"show-s01-e01", "show-s01-e02"})
             self.assertEqual([episode["title"] for episode in second_scan], ["Episode 1", "Episode 2"])
 
+    def test_removed_media_is_dropped_from_incremental_signature_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings = temp_settings(directory)
+            season = settings.media_dir / "Anime" / "Show" / "Season 1"
+            first = write_video(season / "1.mp4")
+            removed = write_video(season / "2.mp4")
+            scanner = LibraryScanner(settings, logging.getLogger("test-scanner"))
+            scanner.scan()
+            first.unlink()
+            removed.unlink()
+            library = scanner.scan()
+            self.assertEqual(library["entries"], [])
+            self.assertNotIn(str(first), library["signatures"])
+            self.assertNotIn(str(removed), library["signatures"])
+
     def test_my_hero_academia_style_episode_names_sort_by_number(self):
         with tempfile.TemporaryDirectory() as directory:
             season = Path(directory) / "contents" / "Anime" / "My Hero Academia" / "Season 01"
@@ -326,6 +341,22 @@ class ScannerCategoryTests(unittest.TestCase):
                 "my-hero-academia-s01-e02",
                 "my-hero-academia-s01-e03",
             ])
+
+    def test_all_production_categories_and_video_extensions_are_scanned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "contents"
+            extensions = ("mp4", "mkv", "webm", "avi", "mov", "m4v", "flv", "mpeg", "ts", "m3u8")
+            categories = ("Movies", "Tutorials", "Other", "TV Shows", "Courses")
+            for category, extension in zip(categories, extensions):
+                write_video(root / category / f"{category} title.{extension}")
+            write_video(root / "Anime" / "Series" / "Season 1" / "1.mp4")
+            entries, state = self.scan(directory)
+            self.assertEqual(len(entries), 6)
+            self.assertEqual({entry["type"] for entry in entries}, {
+                "anime", "movies", "tutorials", "other", "tv-shows", "courses",
+            })
+            self.assertEqual(state.counts["episodes"], 6)
+            self.assertFalse([warning for warning in state.warnings if "unsupported" in warning.lower()])
 
     def test_custom_media_root_is_used(self):
         with tempfile.TemporaryDirectory() as directory:

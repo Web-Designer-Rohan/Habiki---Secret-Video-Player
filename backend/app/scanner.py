@@ -2,14 +2,16 @@
 
 The filesystem is the single source of truth. The scanner walks one
 configurable media root (``Settings.media_root``, default ``contents/``) and
-builds ``data/library.json`` as a cache. Content is organized into four
+builds ``data/library.json`` as a cache. Content is organized into six
 deterministic categories:
 
     contents/
     ├── Anime/       title folders with season folders + numbered episodes
     ├── Movies/      one video per title (a direct file or a title folder)
     ├── Tutorials/   one video per title (same rules as Movies)
-    └── Other/       anything that fits the same standalone rules
+    ├── Other/       anything that fits the same standalone rules
+    ├── TV Shows/    standalone titles or season folders
+    └── Courses/     standalone titles or season folders
 
 Title folders may carry ``poster.*``, ``banner.*`` and an optional
 ``info.json`` (title, description, year, genre, studio). Episodes may be
@@ -32,19 +34,26 @@ from pathlib import Path
 from typing import Any
 
 from .core import Settings, read_json, write_json
+from .media_formats import VIDEO_EXTENSIONS
 
 SEASON_PATTERN = re.compile(r"(?:season|s)\s*[_-]?\s*(\d+)", re.IGNORECASE)
 # Accepted episode names: "1", "01 - Title", "EP 1", "episode 1", "E01", "S2E5".
 EPISODE_PATTERN = re.compile(r"(?:episode|ep|e)\s*[_-]?\s*(\d+)", re.IGNORECASE)
 BARE_NUMBER_PATTERN = re.compile(r"^(\d+)")
-VIDEO_EXTENSIONS = {".mp4"}
 SUBTITLE_EXTENSIONS = {".vtt"}
 IMAGE_EXTENSIONS = {".webp", ".png", ".jpg", ".jpeg"}
 INFO_JSON_NAME = "info.json"
 
 # Canonical category order; each name maps to its folder name in the root.
-CATEGORY_TYPES = ("anime", "movies", "tutorials", "other")
-CATEGORY_DIRS = {"anime": "Anime", "movies": "Movies", "tutorials": "Tutorials", "other": "Other"}
+CATEGORY_TYPES = ("anime", "movies", "tutorials", "other", "tv-shows", "courses")
+CATEGORY_DIRS = {
+    "anime": "Anime",
+    "movies": "Movies",
+    "tutorials": "Tutorials",
+    "other": "Other",
+    "tv-shows": "TV Shows",
+    "courses": "Courses",
+}
 MAX_WARNINGS = 100
 
 METADATA_KEYS = ("title", "description", "year", "genre", "studio")
@@ -180,7 +189,7 @@ class ScanState:
     error: str | None = None
     counts: dict[str, int] = field(
         default_factory=lambda: {"anime": 0, "movies": 0, "tutorials": 0, "other": 0,
-                                 "episodes": 0, "posters": 0, "banners": 0}
+                                 "tv-shows": 0, "courses": 0, "episodes": 0, "posters": 0, "banners": 0}
     )
     warnings: list[str] = field(default_factory=list)
 
@@ -206,6 +215,8 @@ class LibraryScanner:
         self.settings = settings
         self.logger = logger
         self._signatures: dict[str, list[int]] = {}
+        self._previous_signatures: dict[str, list[int]] = {}
+        self._cached_episode_map: dict[str, dict[str, Any]] = {}
 
     def scan(self, state: ScanState | None = None) -> dict[str, Any]:
         state = state or ScanState()
@@ -216,7 +227,12 @@ class LibraryScanner:
         state.warnings.clear()
         state.counts = dict.fromkeys(state.counts, 0)
         try:
-            self._signatures = self._load_previous_signatures()
+            # Build a fresh signature map for this scan. Keeping the previous
+            # map separate preserves incremental reuse while dropping paths
+            # for media that has been removed from the library.
+            self._previous_signatures = self._load_previous_signatures()
+            self._signatures = {}
+            self._cached_episode_map = self._load_cached_episodes()
             entries = self._scan_root(self.settings.media_dir, state)
             for entry in entries:
                 self._count_entry(entry, state.counts)
@@ -265,7 +281,7 @@ class LibraryScanner:
         signatures = stored.get("signatures", {})
         return signatures if isinstance(signatures, dict) else {}
 
-    def _cached_episodes(self) -> dict[str, dict[str, Any]]:
+    def _load_cached_episodes(self) -> dict[str, dict[str, Any]]:
         """Map ``video_path -> episode`` from the previous cache.
 
         Only reused when the video's signature is unchanged, so the episode
@@ -292,9 +308,11 @@ class LibraryScanner:
             signature = [stat.st_mtime_ns, stat.st_size]
         except OSError:
             return None
-        previous = cached.get(str(video))
-        if previous is None or self._signatures.get(str(video)) != signature:
-            self._signatures[str(video)] = signature
+        video_key = str(video)
+        previous = cached.get(video_key)
+        previous_signature = self._previous_signatures.get(video_key)
+        self._signatures[video_key] = signature
+        if previous is None or previous_signature != signature:
             return None
         return previous
 
@@ -378,7 +396,7 @@ class LibraryScanner:
             return None
         subtitle_index = index_directory(directory, SUBTITLE_EXTENSIONS)
         image_index = index_directory(directory, IMAGE_EXTENSIONS)
-        cached = self._cached_episodes()
+        cached = self._cached_episode_map
         used_numbers: set[int] = set()
         fallback = 1
         episodes = []
@@ -425,7 +443,7 @@ class LibraryScanner:
     # -------------------------------------------------------------- standalone
 
     def _scan_standalone(self, category_dir: Path, category: str, state: ScanState) -> list[dict[str, Any]]:
-        """Movies/Tutorials/Other: each title is a single video.
+        """Standalone categories: each title is a single video.
 
         A video file directly inside the category folder is a title; a
         subfolder with exactly one video is a title too (with room for

@@ -190,7 +190,7 @@ function navigateEpisode(direction) {
 function entryTypeLabel(entry) {
   const seasonCount = (entry.seasons || []).length;
   if (seasonCount) return `${seasonCount} ${seasonCount === 1 ? "Season" : "Seasons"} · ${countEpisodes(entry)} ${countEpisodes(entry) === 1 ? "Episode" : "Episodes"}`;
-  const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", movie: "Movie", tutorial: "Tutorial" };
+  const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", "tv-shows": "TV Show", courses: "Course", movie: "Movie", tutorial: "Tutorial" };
   return labels[entry.type] || "Standalone";
 }
 
@@ -325,8 +325,8 @@ async function savePlayback(episode, position, completed = false) {
     // Retry once so a transient failure does not silently lose resume position.
     try {
       await api.saveProgress(payload);
-    } catch (retryError) {
-      console.warn("Playback progress could not be saved", retryError || error);
+    } catch {
+      // Playback remains usable even when the local activity store is unavailable.
     }
   }
   if (completed) await refreshActivity();
@@ -491,7 +491,7 @@ async function injectVersion() {
   try {
     const { version } = await api.version();
     const footerVersion = document.querySelector("#footer-version");
-    if (footerVersion) footerVersion.textContent = `Hibiki / v${version} · AGPL-3.0-or-later`;
+    if (footerVersion) footerVersion.textContent = `Hibiki / v${version} · MIT`;
   } catch { /* keep the static fallbacks in the markup */ }
 }
 

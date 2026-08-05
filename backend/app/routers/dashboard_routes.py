@@ -30,7 +30,7 @@ def dashboard_status(request: Request, _: Annotated[bool, Depends(require_unlock
     episodes = sum(len(season.get("episodes", [])) for entry in entries for season in entry.get("seasons", []))
     episodes += sum(len(entry.get("episodes", [])) for entry in entries)
     counts = {entry_type: sum(1 for entry in entries if entry.get("type") == entry_type)
-              for entry_type in ("anime", "movies", "tutorials", "other")}
+              for entry_type in ("anime", "movies", "tutorials", "other", "tv-shows", "courses")}
     return success({
         **counts,
         "episodes": episodes,
@@ -109,8 +109,3 @@ def update_config(payload: ConfigPayload, request: Request, _: Annotated[bool, D
     settings.save()
     scan = request.app.state.media.scan_async()
     return success({"media_root": settings.media_root, "scan": scan})
-
-
-@router.post("/thumbnails")
-def thumbnails(_: Annotated[bool, Depends(require_unlocked)]):
-    return success({"generated": 0, "message": "Run scripts/generate_thumbnails.py after adding media; generated thumbnails are discovered by the scanner."})

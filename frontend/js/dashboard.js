@@ -28,6 +28,8 @@ export class Dashboard {
       ["Movies", status.movies],
       ["Tutorials", status.tutorials],
       ["Other", status.other],
+      ["TV Shows", status["tv-shows"]],
+      ["Courses", status.courses],
       ["Episodes", status.episodes],
       ["Posters", status.posters],
       ["Banners", status.banners],
@@ -76,7 +78,7 @@ export class Dashboard {
   typeLabel(entry) {
     const seasonCount = (entry.seasons || []).length;
     if (seasonCount) return `${seasonCount} ${seasonCount === 1 ? "Season" : "Seasons"}`;
-    const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", movie: "Movie", tutorial: "Tutorial" };
+    const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", "tv-shows": "TV Show", courses: "Course", movie: "Movie", tutorial: "Tutorial" };
     return labels[entry.type] || "Standalone";
   }
 

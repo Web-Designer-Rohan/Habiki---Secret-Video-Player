@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate episode thumbnails for locally available media.
 
-Captures a representative frame roughly 3-10 seconds into each indexed MP4
+Captures a representative frame roughly 3-10 seconds into each indexed video
 (default: 5 seconds), encodes it as an optimized WebP (max 640 px wide), and
 caches it next to the episode so the library scanner discovers it as the
 episode thumbnail. See docs/DATABASE.md for the capture policy.
@@ -20,9 +20,11 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.app.media_formats import VIDEO_EXTENSIONS
 MEDIA_DIR = PROJECT_ROOT / "contents"
 
-VIDEO_EXTENSIONS = {".mp4"}
 THUMBNAIL_EXTENSIONS = {".webp", ".png", ".jpg", ".jpeg"}
 DEFAULT_CAPTURE_SECONDS = 5.0
 MAX_WIDTH = 640

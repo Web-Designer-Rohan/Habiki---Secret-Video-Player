@@ -78,10 +78,19 @@ class FoundationTests(unittest.TestCase):
             scanner = LibraryScanner(settings, logging.getLogger("test-media"))
             media = MediaService(settings, scanner)
             supported = root / "episode.mp4"
+            supported_variants = {
+                ".mkv": "video/x-matroska", ".webm": "video/webm", ".avi": "video/x-msvideo",
+                ".mov": "video/quicktime", ".m4v": "video/x-m4v", ".flv": "video/x-flv",
+                ".mpeg": "video/mpeg", ".ts": "video/mp2t", ".m3u8": "application/vnd.apple.mpegurl",
+            }
             unsupported = root / "notes.txt"
             supported.write_bytes(b"video")
             unsupported.write_text("private", encoding="utf-8")
             self.assertEqual(media.media_type(str(supported)), "video/mp4")
+            for extension, media_type in supported_variants.items():
+                variant = root / f"episode{extension}"
+                variant.write_bytes(b"video")
+                self.assertEqual(media.media_type(str(variant)), media_type)
             with self.assertRaises(Exception):
                 media.validated_path(str(unsupported))
 
