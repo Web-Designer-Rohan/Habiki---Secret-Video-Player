@@ -76,7 +76,7 @@ export class Dashboard {
   typeLabel(entry) {
     const seasonCount = (entry.seasons || []).length;
     if (seasonCount) return `${seasonCount} ${seasonCount === 1 ? "Season" : "Seasons"}`;
-    const labels = { movie: "Movie", tutorial: "Tutorial", other: "Other" };
+    const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", movie: "Movie", tutorial: "Tutorial" };
     return labels[entry.type] || "Standalone";
   }
 
@@ -119,11 +119,16 @@ export class Dashboard {
       await this.api.scan();
       const finished = await this.waitForScan();
       if (finished) {
+        if (finished.status === "error") {
+          throw new Error(finished.error || "Library scan failed");
+        }
         const warnings = (finished.warnings || []).length;
         this.elements.scanStatus.textContent = warnings
           ? `Scan complete · ${warnings} ${warnings === 1 ? "warning" : "warnings"}`
           : "Scan complete";
         await this.onLibraryChanged();
+      } else {
+        throw new Error("Library scan timed out");
       }
     } catch (error) { this.elements.scanStatus.textContent = error.message; }
   }

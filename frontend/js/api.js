@@ -18,6 +18,7 @@ export const api = {
     request(`/library/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}&sort=${encodeURIComponent(sort)}`, { signal }),
   poster: (entryId) => `/api/v1/library/${encodeURIComponent(entryId)}/poster`,
   banner: (entryId) => `/api/v1/library/${encodeURIComponent(entryId)}/banner`,
+  thumbnail: (episodeId) => `/api/v1/player/thumbnail/${encodeURIComponent(episodeId)}`,
   banners: () => request("/banners"),
   version: () => request("/version"),
   authStatus: () => request("/auth/status"),

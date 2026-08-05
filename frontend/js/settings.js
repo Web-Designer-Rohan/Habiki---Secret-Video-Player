@@ -8,6 +8,7 @@ export class SettingsPanel {
     this.fields = elements.fields;
     this.api = callbacks.api;
     this.onSaved = callbacks.onSaved || (() => {});
+    this.onScan = callbacks.onScan || (async () => {});
     this.current = {};
     this.bind();
   }
@@ -28,8 +29,8 @@ export class SettingsPanel {
     const values = await this.api.settings().catch(() => ({}));
     this.current = values || {};
     this.fields.theme.value = "dark";
-    this.fields.volume.value = String(values.default_volume ?? 100);
-    this.fields.speed.value = String(values.default_speed ?? 1);
+    this.fields.volume.value = String(Number(values.default_volume ?? 100));
+    this.fields.speed.value = String(Number(values.default_speed ?? 1));
     this.fields.subtitles.checked = values.subtitles_default !== "false";
     this.fields.reduceMotion.checked = values.reduce_motion === "true";
     this.fields.welcome.value = values.welcome_screen || "always";
@@ -56,8 +57,8 @@ export class SettingsPanel {
     }
     const values = {
       theme: "dark",
-      default_volume: Number(this.fields.volume.value) || 100,
-      default_speed: Number(this.fields.speed.value) || 1,
+      default_volume: Number(this.fields.volume.value),
+      default_speed: Number(this.fields.speed.value),
       subtitles_default: this.fields.subtitles.checked ? "true" : "false",
       reduce_motion: this.fields.reduceMotion.checked ? "true" : "false",
       welcome_screen: this.fields.welcome.value,
@@ -67,7 +68,8 @@ export class SettingsPanel {
     try {
       await this.api.saveSettings(values);
       const mediaRoot = this.fields.mediaRoot.value.trim() || "contents";
-      await this.api.config(mediaRoot);
+      const configResult = await this.api.config(mediaRoot);
+      await this.onScan(configResult?.scan);
       this.current = values;
       this.fields.currentPassword.value = "";
       this.fields.newPassword.value = "";

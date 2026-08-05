@@ -39,7 +39,10 @@ export class Player {
     });
     this.video.addEventListener("waiting", () => this.loading.removeAttribute("hidden"));
     this.video.addEventListener("canplay", () => this.loading.setAttribute("hidden", ""));
-    this.video.addEventListener("error", () => this.error.removeAttribute("hidden"));
+    this.video.addEventListener("error", () => {
+      this.loading.setAttribute("hidden", "");
+      this.error.removeAttribute("hidden");
+    });
     this.video.addEventListener("pause", () => {
       if (this.resumeReady && this.currentEpisode) {
         this.onPause(this.currentEpisode, this.video.currentTime);
@@ -62,13 +65,14 @@ export class Player {
       [...this.video.textTracks].forEach((track) => { track.mode = track.language === this.subtitle.value ? "showing" : "hidden"; });
     });
     this.audioTrack?.addEventListener("change", () => {
-      const tracks = this.video.audioTracks;
+      const tracks = this.video.audioTracks || [];
       [...tracks].forEach((track) => { track.enabled = track.language === this.audioTrack.value; });
     });
     this.speed.addEventListener("change", () => { this.video.playbackRate = Number(this.speed.value); });
     this.fullscreenToggle.addEventListener("click", () => this.fullscreen());
     this.prevButton?.addEventListener("click", () => this.onNavigate("prev"));
     this.nextButton?.addEventListener("click", () => this.onNavigate("next"));
+    document.addEventListener("fullscreenchange", () => this.updateFullscreenButton());
     this.video.addEventListener("dblclick", () => this.fullscreen());
     document.addEventListener("keydown", (event) => {
       if (event.target.matches("input, select, textarea")) return;
@@ -100,6 +104,7 @@ export class Player {
       this.video.append(track);
       this.subtitle.append(new Option(language.toUpperCase(), language));
     });
+    this.video.poster = source.thumbnail || "";
     this.video.src = source.url;
     this.video.load();
     this.video.addEventListener("loadedmetadata", () => {
@@ -121,9 +126,9 @@ export class Player {
   }
 
   refreshAudioTracks() {
-    const tracks = this.video.audioTracks;
-    if (!tracks || tracks.length < 2) {
-      this.audioTrack.hidden = true;
+    const tracks = this.video.audioTracks || [];
+    if (!this.audioTrack || tracks.length < 2) {
+      if (this.audioTrack) this.audioTrack.hidden = true;
       return;
     }
     this.audioTrack.replaceChildren();
@@ -175,9 +180,19 @@ export class Player {
     if (this.nextButton) this.nextButton.disabled = !nextEnabled;
   }
 
+  updateFullscreenButton() {
+    if (!this.fullscreenToggle) return;
+    const active = Boolean(document.fullscreenElement);
+    this.fullscreenToggle.textContent = active ? "⛶" : "⛶";
+    this.fullscreenToggle.setAttribute("aria-label", active ? "Exit fullscreen" : "Fullscreen");
+  }
+
   fullscreen() {
     const target = document.querySelector("#player-shell");
-    if (!document.fullscreenElement) target.requestFullscreen?.();
-    else document.exitFullscreen?.();
+    if (!document.fullscreenElement) {
+      Promise.resolve(target.requestFullscreen?.()).catch(() => this.error.removeAttribute("hidden"));
+    } else {
+      Promise.resolve(document.exitFullscreen?.()).catch(() => this.error.removeAttribute("hidden"));
+    }
   }
 }

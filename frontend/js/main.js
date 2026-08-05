@@ -122,6 +122,20 @@ const settingsPanel = new SettingsPanel({
 }, {
   api,
   onSaved: applySettings,
+  onScan: async () => {
+    const finished = await dashboard.waitForScan();
+    if (!finished) {
+      throw new Error("Library scan timed out");
+    }
+    if (finished.status === "error") {
+      throw new Error(finished.error || "Library scan failed");
+    }
+    await refreshLibrary();
+    await refreshActivity();
+    elements.scanStatus.textContent = (finished.warnings || []).length
+      ? `Scan complete · ${finished.warnings.length} ${finished.warnings.length === 1 ? "warning" : "warnings"}`
+      : "Scan complete";
+  },
 });
 
 function titleFor(entryId) {
@@ -164,7 +178,7 @@ function navigateEpisode(direction) {
 function entryTypeLabel(entry) {
   const seasonCount = (entry.seasons || []).length;
   if (seasonCount) return `${seasonCount} ${seasonCount === 1 ? "Season" : "Seasons"} · ${countEpisodes(entry)} ${countEpisodes(entry) === 1 ? "Episode" : "Episodes"}`;
-  const labels = { movie: "Movie", tutorial: "Tutorial", other: "Other" };
+  const labels = { movies: "Movie", tutorials: "Tutorial", other: "Other", movie: "Movie", tutorial: "Tutorial" };
   return labels[entry.type] || "Standalone";
 }
 
@@ -215,6 +229,7 @@ function libraryCard(entry) {
       play.className = "episode-button";
       play.type = "button";
       play.textContent = `${String(episode.number).padStart(2, "0")} · ${episode.title}`;
+      play.title = episode.title;
       play.addEventListener("click", () => playEpisode(enrichEpisode(episode, entry, season)));
       episodes.append(play);
     });
@@ -468,7 +483,7 @@ function teacherKeyLabel(shortcut) {
 
 function applySettings(values) {
   player.applyDefaults({
-    volume: (Number(values.default_volume ?? 100) || 100) / 100,
+    volume: Number(values.default_volume ?? 100) / 100,
     speed: Number(values.default_speed ?? 1) || 1,
     subtitles: values.subtitles_default !== "false",
   });
