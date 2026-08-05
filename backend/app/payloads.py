@@ -2,9 +2,66 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+SettingsValue = str | int | float | bool
+
+
+def validate_reading_page(value: str) -> str:
+    """Allow http(s) URLs and same-origin relative paths only."""
+    value = value.strip()
+    if not value:
+        return value
+    if any(ord(character) < 32 for character in value):
+        raise ValueError("reading_page contains invalid control characters")
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"}:
+        if not parsed.netloc:
+            raise ValueError("reading_page must include a host")
+    elif parsed.scheme or parsed.netloc or value.startswith("//"):
+        raise ValueError("reading_page must be an http(s) URL or a relative path")
+    return value
+
+
+def setting_text(value: SettingsValue) -> str:
+    """Persist all UI settings as the string values used by the key/value store."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+class SettingsPayload(BaseModel):
+    values: dict[str, SettingsValue] = Field(default_factory=dict)
+
+    @field_validator("values")
+    @classmethod
+    def validate_values(cls, values: dict[str, SettingsValue]) -> dict[str, SettingsValue]:
+        if "reading_page" in values:
+            validate_reading_page(setting_text(values["reading_page"]))
+        if "default_volume" in values:
+            try:
+                volume = float(values["default_volume"])
+            except (TypeError, ValueError):
+                raise ValueError("default_volume must be a number") from None
+            if not math.isfinite(volume) or not 0 <= volume <= 100:
+                raise ValueError("default_volume must be between 0 and 100")
+        if "default_speed" in values:
+            try:
+                speed = float(values["default_speed"])
+            except (TypeError, ValueError):
+                raise ValueError("default_speed must be a number") from None
+            if not math.isfinite(speed) or not 0.25 <= speed <= 4:
+                raise ValueError("default_speed must be between 0.25 and 4")
+        return values
+
+
+class ConfigPayload(BaseModel):
+    media_root: str = Field(min_length=1, max_length=300)
 
 
 class UnlockPayload(BaseModel):
@@ -29,12 +86,6 @@ class FavoritePayload(BaseModel):
     enabled: bool = True
 
 
-class SettingsPayload(BaseModel):
-    values: dict[str, str] = Field(default_factory=dict)
-
-
-class ConfigPayload(BaseModel):
-    media_root: str = Field(min_length=1, max_length=300)
 
 
 class AnimeEditPayload(BaseModel):

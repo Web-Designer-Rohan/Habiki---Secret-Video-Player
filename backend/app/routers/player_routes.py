@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, Response
 
 from ..auth import require_unlocked
 from ..payloads import ProgressPayload, success
@@ -20,6 +21,7 @@ def player_source(episode_id: str, request: Request):
     return success({
         "episode_id": episode_id,
         "url": f"/api/v1/player/file/{episode_id}",
+        "thumbnail": f"/api/v1/player/thumbnail/{episode_id}",
         "subtitles": [f"/api/v1/player/subtitle/{episode_id}/{index}" for index, _ in enumerate(episode.get("subtitle_paths", []))],
     })
 
@@ -28,6 +30,23 @@ def player_source(episode_id: str, request: Request):
 def player_file(episode_id: str, request: Request):
     episode = indexed_episode(request, episode_id)
     return media_file(request.app.state.media, episode["video_path"])
+
+
+@router.get("/thumbnail/{episode_id}")
+def player_thumbnail(episode_id: str, request: Request):
+    candidate = request.app.state.media.thumbnail_path(episode_id)
+    if candidate is None:
+        # Keep the player useful for media without a thumbnail or title poster.
+        # The fallback is generated locally and never depends on a network asset.
+        placeholder = """<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 9\"><rect width=\"16\" height=\"9\" fill=\"#181818\"/><path d=\"M7.5 3.5 11 5.75 7.5 8z\" fill=\"#c51f3a\"/></svg>"""
+        return Response(placeholder, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
+    media_type = {
+        ".webp": "image/webp",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }[candidate.suffix.lower()]
+    return FileResponse(candidate, media_type=media_type, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.get("/subtitle/{episode_id}/{subtitle_index}")

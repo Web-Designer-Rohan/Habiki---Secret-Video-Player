@@ -150,9 +150,9 @@ class ScannerCategoryTests(unittest.TestCase):
                 write_video(season / name)
             entries, _ = self.scan(directory)
             episodes = entries[0]["seasons"][0]["episodes"]
-            self.assertEqual([e["number"] for e in episodes], [5, 4, 3, 1, 2])
+            self.assertEqual([e["number"] for e in episodes], [1, 2, 3, 4, 5])
             self.assertEqual([e["title"] for e in episodes],
-                             ["Alone", "Episode 4", "The Fight", "Episode 1", "Episode 2"])
+                             ["Episode 1", "Episode 2", "The Fight", "Episode 4", "Alone"])
 
     def test_videos_without_numbers_are_ordered_by_name(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -307,6 +307,25 @@ class ScannerCategoryTests(unittest.TestCase):
             ids = {episode["id"] for episode in second_scan}
             self.assertEqual(ids, {"show-s01-e01", "show-s01-e02"})
             self.assertEqual([episode["title"] for episode in second_scan], ["Episode 1", "Episode 2"])
+
+    def test_my_hero_academia_style_episode_names_sort_by_number(self):
+        with tempfile.TemporaryDirectory() as directory:
+            season = Path(directory) / "contents" / "Anime" / "My Hero Academia" / "Season 01"
+            for name in (
+                "My Hero Academia - 03.mp4",
+                "My Hero Academia - 01.mp4",
+                "My Hero Academia - 02.mp4",
+            ):
+                write_video(season / name)
+            entries, _ = self.scan(directory)
+            entry = entries[0]
+            self.assertEqual(entry["id"], "my-hero-academia")
+            self.assertEqual([episode["number"] for episode in entry["seasons"][0]["episodes"]], [1, 2, 3])
+            self.assertEqual([episode["id"] for episode in entry["seasons"][0]["episodes"]], [
+                "my-hero-academia-s01-e01",
+                "my-hero-academia-s01-e02",
+                "my-hero-academia-s01-e03",
+            ])
 
     def test_custom_media_root_is_used(self):
         with tempfile.TemporaryDirectory() as directory:

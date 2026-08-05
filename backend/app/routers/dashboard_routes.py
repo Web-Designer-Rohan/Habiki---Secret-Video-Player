@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ..auth import require_unlocked
@@ -93,11 +95,20 @@ def update_config(payload: ConfigPayload, request: Request, _: Annotated[bool, D
     media_root = payload.media_root.strip()
     if media_root in (".", "..") or "\x00" in media_root:
         raise HTTPException(status_code=422, detail="Invalid media root")
+    candidate = Path(media_root).expanduser()
+    if not candidate.is_absolute():
+        candidate = settings.project_root / candidate
+    candidate = candidate.resolve()
+    if candidate.is_file():
+        raise HTTPException(status_code=422, detail="Media root must be a directory")
+    try:
+        candidate.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise HTTPException(status_code=422, detail=f"Media root is not available: {error}") from error
     settings.media_root = media_root
     settings.save()
-    settings.media_dir.mkdir(parents=True, exist_ok=True)
-    request.app.state.media.scan_async()
-    return success({"media_root": settings.media_root})
+    scan = request.app.state.media.scan_async()
+    return success({"media_root": settings.media_root, "scan": scan})
 
 
 @router.post("/thumbnails")

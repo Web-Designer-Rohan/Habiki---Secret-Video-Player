@@ -5,6 +5,15 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
+
+def image_media_type(path):
+    return {
+        ".webp": "image/webp",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }[path.suffix.lower()]
+
 from ..media import VALID_CATEGORIES, VALID_SORTS, filter_library
 from ..payloads import success
 from .common import get_anime_entry
@@ -52,7 +61,7 @@ def poster(anime_id: str, request: Request):
     candidate = request.app.state.media.poster_path(anime_id)
     if candidate is None:
         raise HTTPException(status_code=404, detail="Poster not available")
-    return FileResponse(candidate, media_type="image/webp" if candidate.suffix.lower() == ".webp" else "image/jpeg",
+    return FileResponse(candidate, media_type=image_media_type(candidate),
                         headers={"Cache-Control": "public, max-age=86400"})
 
 
@@ -62,7 +71,7 @@ def banner(anime_id: str, request: Request):
     candidate = request.app.state.media.banner_path(anime_id)
     if candidate is None:
         raise HTTPException(status_code=404, detail="Banner not available")
-    return FileResponse(candidate, media_type="image/webp" if candidate.suffix.lower() == ".webp" else "image/jpeg",
+    return FileResponse(candidate, media_type=image_media_type(candidate),
                         headers={"Cache-Control": "public, max-age=86400"})
 
 

@@ -75,7 +75,13 @@ def episode_number(stem: str) -> int | None:
     if match:
         return int(match.group(1))
     match = EPISODE_PATTERN.search(stem)
-    return int(match.group(1)) if match else None
+    if match:
+        return int(match.group(1))
+    # Many real-world releases prefix the title (for example
+    # ``My Hero Academia - 01``). Accept a standalone numeric token anywhere
+    # in the stem after the explicit marker formats have been checked.
+    tokens = re.findall(r"(?:^|[\s._-])(\d{1,3})(?=$|[\s._-])", stem)
+    return int(tokens[-1]) if tokens else None
 
 
 def episode_title(stem: str, number: int) -> str:
@@ -363,8 +369,11 @@ class LibraryScanner:
         return seasons
 
     def _scan_episodes(self, title_dir: Path, season: int, directory: Path, state: ScanState) -> dict[str, Any] | None:
-        videos = sorted((path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS),
-                        key=lambda path: path.name.casefold())
+        videos = sorted(
+            (path for path in directory.iterdir()
+             if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS),
+            key=lambda path: path.name.casefold(),
+        )
         if not videos:
             return None
         subtitle_index = index_directory(directory, SUBTITLE_EXTENSIONS)
@@ -373,21 +382,38 @@ class LibraryScanner:
         used_numbers: set[int] = set()
         fallback = 1
         episodes = []
-        for video in videos:
-            number = episode_number(video.stem)
+        parsed_videos: list[tuple[Path, int | None]] = [
+            (video, episode_number(video.stem)) for video in videos
+        ]
+        # Numbered episodes are ordered numerically; unnumbered files retain
+        # deterministic filename order after the numbered files.
+        parsed_videos.sort(key=lambda item: (
+            item[1] is None,
+            item[1] if item[1] is not None else 0,
+            item[0].name.casefold(),
+        ))
+        anime_slug = slugify(title_dir.name)
+        for video, parsed_number in parsed_videos:
+            number = parsed_number
             if number is None or number in used_numbers:
                 while fallback in used_numbers:
                     fallback += 1
                 number = fallback
             used_numbers.add(number)
             fallback = number + 1
+            expected_id = f"{anime_slug}-s{season:02d}-e{number:02d}"
             reused = self._reuse_episode(video, cached)
-            if reused is not None:
-                episodes.append(reused)
+            if reused is not None and reused.get("id") == expected_id and reused.get("number") == number:
+                # A reused record must still carry current asset paths so
+                # newly added thumbnails/subtitles are visible immediately.
+                episodes.append({
+                    **reused,
+                    "subtitle_paths": self._subtitles(video, subtitle_index),
+                    "thumbnail_path": image_index.get(video.stem.lower()),
+                })
                 continue
-            anime_slug = slugify(title_dir.name)
             episodes.append({
-                "id": f"{anime_slug}-s{season:02d}-e{number:02d}",
+                "id": expected_id,
                 "number": number,
                 "title": episode_title(video.stem, number),
                 "video_path": str(video),

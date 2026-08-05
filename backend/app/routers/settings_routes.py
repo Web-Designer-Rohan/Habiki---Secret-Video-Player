@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 
 from ..auth import require_unlocked
-from ..payloads import SettingsPayload, success
+from ..payloads import SettingsPayload, setting_text, validate_reading_page, success
 from ..repositories import ActivityRepository
 
 router = APIRouter(prefix="/api/v1", tags=["settings"])
@@ -24,14 +24,21 @@ ALLOWED_SETTING_KEYS = {
 }
 
 
-def filter_settings(values: dict[str, str]) -> dict[str, str]:
+def filter_settings(values: dict[str, object]) -> dict[str, str]:
     """Reject unknown setting keys at the API boundary.
 
     The settings table is key/value storage; a client must not be able to
     write arbitrary rows into it (the password hash lives there under a key
     that is never part of the whitelist).
     """
-    return {key: value for key, value in values.items() if key in ALLOWED_SETTING_KEYS}
+    filtered = {
+        key: setting_text(value)
+        for key, value in values.items()
+        if key in ALLOWED_SETTING_KEYS
+    }
+    if "reading_page" in filtered:
+        validate_reading_page(filtered["reading_page"])
+    return filtered
 
 
 @router.get("/settings")

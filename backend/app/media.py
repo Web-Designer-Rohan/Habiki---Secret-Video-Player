@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -103,9 +104,15 @@ class MediaService:
         """
         if self.scan_state.status == "scanning":
             return self.scan_status()
+        # Publish the in-progress state before starting the worker. A small
+        # scan can otherwise finish between Thread.start() and the response,
+        # making callers believe no scan occurred.
+        self.scan_state.status = "scanning"
+        self.scan_state.started_at = datetime.now(timezone.utc).isoformat()
+        initial_status = self.scan_status()
         self._scan_thread = threading.Thread(target=self.scan, daemon=True)
         self._scan_thread.start()
-        return self.scan_status()
+        return initial_status
 
     def scan_status(self) -> dict[str, Any]:
         return self.scan_state.snapshot()
@@ -212,6 +219,28 @@ class MediaService:
 
     def banner_path(self, entry_id: str) -> Path | None:
         return self._asset_path(entry_id, "_banner_index")
+
+    def thumbnail_path(self, episode_id: str) -> Path | None:
+        """Resolve an indexed episode thumbnail, falling back to its title poster."""
+        episode = self.find_episode(episode_id)
+        if not episode:
+            return None
+        thumbnail = episode.get("thumbnail_path")
+        if thumbnail:
+            try:
+                candidate = self.validated_path(thumbnail, allowed_extensions=set(IMAGE_EXTENSIONS))
+            except HTTPException:
+                candidate = None
+            if candidate is not None and candidate.is_file():
+                return candidate
+        for entry in self._load_library().get("entries", []):
+            episodes = [
+                *[episode_item for season in entry.get("seasons", []) for episode_item in season.get("episodes", [])],
+                *entry.get("episodes", []),
+            ]
+            if any(item.get("id") == episode_id for item in episodes):
+                return self.poster_path(entry.get("id", ""))
+        return None
 
     def update_metadata(self, entry_id: str, fields: dict[str, Any]) -> dict[str, Any]:
         """Persist metadata edits to ``info.json`` (the source of truth).

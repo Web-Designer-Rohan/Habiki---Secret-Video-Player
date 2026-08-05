@@ -199,16 +199,37 @@ class ApiSecurityTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["version"], VERSION)
 
-    def test_settings_whitelist_rejects_unknown_keys(self):
+    def test_settings_accept_numeric_player_values_and_persist_as_strings(self):
         self.unlock()
         response = self.client.put("/api/v1/settings", json={"values": {
-            "theme": "dark",
+            "default_volume": 0,
+            "default_speed": 1.25,
+            "reading_page": "/reading.html",
             "injected_junk": "should-not-be-stored",
         }})
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(response.json()["data"], {"theme": "dark"})
+        self.assertEqual(response.json()["data"], {
+            "default_volume": "0",
+            "default_speed": "1.25",
+            "reading_page": "/reading.html",
+        })
         stored = self.client.get("/api/v1/settings").json()["data"]
+        self.assertEqual(stored["default_volume"], "0")
+        self.assertEqual(stored["default_speed"], "1.25")
+        self.assertEqual(stored["reading_page"], "/reading.html")
         self.assertNotIn("injected_junk", stored)
+
+    def test_settings_reject_invalid_reading_page_and_player_values(self):
+        self.unlock()
+        for values in (
+            {"reading_page": "javascript:alert(1)"},
+            {"reading_page": "https://"},
+            {"default_volume": 101},
+            {"default_speed": 0},
+        ):
+            response = self.client.put("/api/v1/settings", json={"values": values})
+            self.assertEqual(response.status_code, 422, values)
+            self.assertEqual(response.json()["error"]["code"], "VALIDATION_ERROR")
 
     def test_large_responses_are_gzip_compressed(self):
         response = self.client.get("/", headers={"Accept-Encoding": "gzip"})
@@ -261,6 +282,23 @@ class ApiSecurityTests(unittest.TestCase):
         entries = self.client.get("/api/v1/library").json()["data"]["entries"]
         self.assertEqual(entries[0]["id"], "show")
 
+    def test_thumbnail_prefers_episode_thumbnail_then_poster_then_fallback(self):
+        show = self.settings.media_dir / "Anime" / "Show"
+        season = show / "Season 01"
+        season.mkdir(parents=True)
+        (season / "1.mp4").write_bytes(b"video")
+        (season / "1.webp").write_bytes(b"thumbnail")
+        (show / "poster.jpg").write_bytes(b"poster")
+        app.state.media.scan()
+        thumbnail = self.client.get("/api/v1/player/thumbnail/show-s01-e01")
+        self.assertEqual(thumbnail.status_code, 200)
+        self.assertEqual(thumbnail.content, b"thumbnail")
+        (season / "1.webp").unlink()
+        app.state.media.scan()
+        poster = self.client.get("/api/v1/player/thumbnail/show-s01-e01")
+        self.assertEqual(poster.status_code, 200)
+        self.assertEqual(poster.content, b"poster")
+
     def test_config_media_root_roundtrip(self):
         self.unlock()
         current = self.client.get("/api/v1/dashboard/config").json()["data"]
@@ -273,6 +311,16 @@ class ApiSecurityTests(unittest.TestCase):
         stored = json.loads(self.settings.config_path.read_text(encoding="utf-8"))
         self.assertEqual(stored["media_root"], "other")
         self.assertEqual(self.client.get("/api/v1/dashboard/config").json()["data"]["media_root"], "other")
+        deadline = 5.0
+        while deadline > 0:
+            status = self.client.get("/api/v1/dashboard/scan/status").json()["data"]
+            if status["status"] != "scanning":
+                break
+            import time as _time
+            _time.sleep(0.05)
+            deadline -= 0.05
+        self.assertEqual(status["status"], "idle")
+        self.assertEqual(self.client.get("/api/v1/library").json()["data"]["entries"], [])
         bad = self.client.post("/api/v1/dashboard/config", json={"media_root": ".."})
         self.assertEqual(bad.status_code, 422)
 
