@@ -200,7 +200,7 @@ Administrator settings:
 - Media root (folder name or absolute path; default `contents`)
 - Application configuration
 
-Settings persist and are applied on the next launch.
+Settings persist and are applied immediately; they are restored on the next launch.
 
 ---
 
