@@ -5,6 +5,7 @@ export class TeacherMode {
     this.kicker = elements.kicker;
     this.title = elements.title;
     this.meta = elements.meta;
+    this.date = elements.date;
     this.body = elements.body;
     this.onActivate = callbacks.onActivate || (() => {});
     this.onDeactivate = callbacks.onDeactivate || (() => {});
@@ -13,6 +14,7 @@ export class TeacherMode {
     this.keyLabel = "T";
     this.readingPage = "";
     this.readingText = "";
+    this.opener = null;
     this.bind();
   }
 
@@ -24,11 +26,9 @@ export class TeacherMode {
   }
 
   bind() {
-    this.exitButton.addEventListener("click", () => this.deactivate());
-    this.overlay.addEventListener("click", (event) => { if (event.target === this.overlay) this.deactivate(); });
+    this.exitButton.addEventListener("click", () => this.toggle());
     document.addEventListener("keydown", (event) => {
       if (event.target.matches("input, select, textarea, [contenteditable]")) return;
-      if (event.code === "Escape" && this.active) { this.deactivate(); return; }
       if (this.shortcut && this.shortcut !== "none" && event.code === this.shortcut) {
         event.preventDefault();
         this.toggle();
@@ -44,11 +44,21 @@ export class TeacherMode {
   activate() {
     if (this.active) return;
     this.active = true;
+    this.opener = typeof document !== "undefined" ? document.activeElement : null;
     this.render();
+    const activation = this.onActivate();
+    if (activation && typeof activation.then === "function") {
+      activation.then(() => this.reveal()).catch(() => this.reveal());
+    } else {
+      this.reveal();
+    }
+  }
+
+  reveal() {
+    if (!this.active) return;
     this.overlay.hidden = false;
     this.exitButton.focus();
     requestAnimationFrame(() => this.overlay.classList.add("is-active"));
-    this.onActivate();
   }
 
   deactivate() {
@@ -57,14 +67,15 @@ export class TeacherMode {
     this.overlay.classList.remove("is-active");
     this.overlay.hidden = true;
     this.onDeactivate();
+    this.opener?.focus?.();
+    this.opener = null;
   }
 
   render() {
-    this.kicker.textContent = "Reading mode";
-    this.exitButton.textContent = this.keyLabel
-      ? `Exit reading mode · ${this.keyLabel}`
-      : "Exit reading mode";
-    this.exitButton.setAttribute("aria-label", "Exit reading mode");
+    this.kicker.textContent = "Study desk";
+    this.exitButton.setAttribute("aria-label", "Toggle Teacher Mode");
+    this.exitButton.title = "Toggle Teacher Mode";
+    if (this.date) this.date.textContent = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date());
     if (this.readingPage) {
       this.body.replaceChildren();
       const frame = document.createElement("iframe");
@@ -74,8 +85,12 @@ export class TeacherMode {
       this.body.append(frame);
       return;
     }
-    const text = this.readingText || "";
-    this.body.textContent = text;
+    const text = this.readingText || this.studyCopy();
+    this.body.innerHTML = text;
+  }
+
+  studyCopy() {
+    return `<article class="study-sheet"><p class="study-kicker">Foundations / 01</p><h2>Build systems that remain understandable.</h2><p class="study-lede">Software engineering is the practice of turning change into something a team can reason about. The strongest systems make their boundaries visible, keep decisions reversible, and leave the next reader a clear path.</p><div class="study-grid"><section><span class="study-number">01</span><h3>Model the problem</h3><p>Before choosing a framework, name the inputs, outputs, invariants, and failure modes. A precise model is often the fastest route to a small implementation.</p></section><section><span class="study-number">02</span><h3>Prefer clear seams</h3><p>Separate presentation, policy, and storage. When a requirement changes, one layer should absorb the change without forcing every other layer to move.</p></section><section><span class="study-number">03</span><h3>Make feedback cheap</h3><p>Tests, logs, and small commits shorten the distance between an idea and evidence. Fast feedback protects both quality and curiosity.</p></section></div><aside class="study-note"><strong>Field note</strong><p>Good engineering is not the absence of complexity. It is the deliberate placement of complexity where it can be named, tested, and maintained.</p></aside></article>`;
   }
 
   setContent({ title = "", meta = "" } = {}) {

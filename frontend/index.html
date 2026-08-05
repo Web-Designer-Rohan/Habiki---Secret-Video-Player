@@ -3,10 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111111">
+  <meta name="theme-color" content="#111111" id="theme-color">
   <meta name="description" content="Hibiki — your private local anime library.">
+  <meta name="color-scheme" content="dark">
   <title>Hibiki — Local library</title>
+  <link rel="preload" href="/assets/fonts/Anton/Anton-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="/frontend/styles.css">
+  <script>
+    (() => {
+      try {
+        const theme = localStorage.getItem("hibiki.theme");
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch { /* private browsing may disable storage */ }
+    })();
+  </script>
 </head>
 <body>
   <div class="app-noise" aria-hidden="true"></div>
@@ -72,6 +83,7 @@
               <select class="player__audio" id="audio-track" aria-label="Audio" hidden></select>
               <select class="player__speed" id="speed" aria-label="Playback speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
               <button class="player__control" id="fullscreen-toggle" type="button" aria-label="Fullscreen">⛶</button>
+              <button class="player__teacher" id="player-teacher" type="button" aria-label="Open Teacher Mode"><span aria-hidden="true">▤</span><span>Study</span></button>
             </div>
           </div>
         </section>
@@ -119,38 +131,38 @@
       <p class="eyebrow">Hibiki / preferences</p>
       <h2 id="settings-title">Settings</h2>
       <section class="settings-group">
-        <h3>Theme</h3>
-        <select id="set-theme"><option value="dark">Dark (charcoal)</option></select>
+        <h3><span class="settings-group__icon" aria-hidden="true">◐</span>Theme</h3>
+        <label class="settings-control"><span class="sr-only">Color theme</span><select id="set-theme"><option value="dark">Hibiki Dark</option><option value="amoled">AMOLED</option><option value="nord">Nord</option><option value="tokyo-night">Tokyo Night</option><option value="catppuccin-mocha">Catppuccin Mocha</option><option value="dracula">Dracula</option><option value="gruvbox">Gruvbox</option></select></label>
       </section>
       <section class="settings-group">
-        <h3>Playback</h3>
-        <label class="settings-row"><span>Default volume</span><input id="set-volume" type="range" min="0" max="100" step="5"></label>
+        <h3><span class="settings-group__icon" aria-hidden="true">◉</span>Playback</h3>
+        <label class="settings-row"><span>Default volume <output id="set-volume-value">100%</output></span><input id="set-volume" type="range" min="0" max="100" step="5" value="100"></label>
         <label class="settings-row"><span>Default speed</span><select id="set-speed"><option value="0.75">0.75×</option><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
-        <label class="settings-row"><span>Subtitles on by default</span><input id="set-subtitles" type="checkbox"></label>
+        <label class="settings-row"><span>Subtitles on by default</span><input class="switch" id="set-subtitles" type="checkbox"><span class="switch__track" aria-hidden="true"><span></span></span></label>
       </section>
       <section class="settings-group">
-        <h3>Animation</h3>
-        <label class="settings-row"><span>Reduce motion</span><input id="set-reduce-motion" type="checkbox"></label>
+        <h3><span class="settings-group__icon" aria-hidden="true">✦</span>Animation</h3>
+        <label class="settings-row"><span>Reduce motion</span><input class="switch" id="set-reduce-motion" type="checkbox"><span class="switch__track" aria-hidden="true"><span></span></span></label>
       </section>
       <section class="settings-group">
-        <h3>Welcome screen</h3>
+        <h3><span class="settings-group__icon" aria-hidden="true">↗</span>Welcome screen</h3>
         <select id="set-welcome"><option value="always">Show on every launch</option><option value="once">Show once per session</option></select>
       </section>
       <section class="settings-group">
-        <h3>Reading mode shortcut</h3>
+        <h3><span class="settings-group__icon" aria-hidden="true">⌘</span>Reading mode shortcut</h3>
         <select id="set-teacher-key"><option value="KeyT">T</option><option value="F2">F2</option><option value="none">—</option></select>
       </section>
       <section class="settings-group">
-        <h3>Reading page (optional URL)</h3>
+        <h3><span class="settings-group__icon" aria-hidden="true">▤</span>Reading page (optional URL)</h3>
         <input id="set-reading-page" type="text" inputmode="url" placeholder="https://… or /reading.html">
       </section>
       <section class="settings-group">
-        <h3>Media folder</h3>
+        <h3><span class="settings-group__icon" aria-hidden="true">⌂</span>Media folder</h3>
         <p class="modal__hint">Folder name inside the project, or an absolute path. Default: contents. Changes apply after the scan finishes.</p>
         <input id="set-media-root" type="text" placeholder="contents">
       </section>
       <section class="settings-group">
-        <h3>Change password</h3>
+        <h3><span class="settings-group__icon" aria-hidden="true">⌑</span>Change password</h3>
         <label class="settings-row"><span>Current password</span><input id="set-current-password" type="password" autocomplete="current-password"></label>
         <label class="settings-row"><span>New password</span><input id="set-new-password" type="password" minlength="8" autocomplete="new-password"></label>
       </section>
@@ -161,12 +173,12 @@
   </dialog>
   <section class="teacher" id="teacher" hidden aria-label="Reading mode">
     <header class="teacher__bar">
-      <p class="teacher__kicker" id="teacher-kicker">Reading mode</p>
-      <button class="button button--line teacher__exit" id="teacher-exit" type="button">Exit reading mode</button>
+      <div><p class="teacher__kicker" id="teacher-kicker">Study desk</p><p class="teacher__meta" id="teacher-meta"></p></div>
+      <button class="teacher__toggle" id="teacher-exit" type="button" aria-label="Toggle Teacher Mode" title="Toggle Teacher Mode"><span aria-hidden="true">▤</span><span class="sr-only">Toggle Teacher Mode</span></button>
     </header>
     <main class="teacher__page">
-      <p class="teacher__meta" id="teacher-meta"></p>
-      <h1 class="teacher__title" id="teacher-title">Hibiki</h1>
+      <div class="teacher__reading-head"><p class="teacher__subject">Independent study</p><span class="teacher__rule" aria-hidden="true"></span><span class="teacher__date" id="teacher-date"></span></div>
+      <h1 class="teacher__title" id="teacher-title">Study desk</h1>
       <div class="teacher__body" id="teacher-body"></div>
     </main>
   </section>

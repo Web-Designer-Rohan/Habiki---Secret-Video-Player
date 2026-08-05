@@ -1,3 +1,5 @@
+import { applyTheme, normalizeTheme } from "./themes.js";
+
 export class SettingsPanel {
   constructor(elements, callbacks = {}) {
     this.dialog = elements.dialog;
@@ -9,6 +11,7 @@ export class SettingsPanel {
     this.api = callbacks.api;
     this.onSaved = callbacks.onSaved || (() => {});
     this.onScan = callbacks.onScan || (async () => {});
+    this.onThemePreview = callbacks.onThemePreview || (() => {});
     this.current = {};
     this.bind();
   }
@@ -16,6 +19,11 @@ export class SettingsPanel {
   bind() {
     this.closeButton.addEventListener("click", () => this.dialog.close());
     this.form.addEventListener("submit", (event) => { event.preventDefault(); this.save(); });
+    this.fields.theme?.addEventListener?.("change", () => {
+      const theme = applyTheme(this.fields.theme.value);
+      this.onThemePreview(theme);
+    });
+    this.fields.volume?.addEventListener?.("input", () => this.updateVolumeValue());
   }
 
   open() {
@@ -28,8 +36,10 @@ export class SettingsPanel {
     this.status.hidden = true;
     const values = await this.api.settings().catch(() => ({}));
     this.current = values || {};
-    this.fields.theme.value = "dark";
+    this.fields.theme.value = normalizeTheme(values.theme);
+    applyTheme(this.fields.theme.value);
     this.fields.volume.value = String(Number(values.default_volume ?? 100));
+    this.updateVolumeValue();
     this.fields.speed.value = String(Number(values.default_speed ?? 1));
     this.fields.subtitles.checked = values.subtitles_default !== "false";
     this.fields.reduceMotion.checked = values.reduce_motion === "true";
@@ -40,6 +50,11 @@ export class SettingsPanel {
     this.fields.newPassword.value = "";
     const config = await this.api.getConfig().catch(() => null);
     if (config) this.fields.mediaRoot.value = config.media_root || "contents";
+  }
+
+  updateVolumeValue() {
+    const output = document.querySelector("#set-volume-value");
+    if (output) output.textContent = `${this.fields.volume.value}%`;
   }
 
   async save() {
@@ -56,7 +71,7 @@ export class SettingsPanel {
       }
     }
     const values = {
-      theme: "dark",
+      theme: normalizeTheme(this.fields.theme.value),
       default_volume: Number(this.fields.volume.value),
       default_speed: Number(this.fields.speed.value),
       subtitles_default: this.fields.subtitles.checked ? "true" : "false",

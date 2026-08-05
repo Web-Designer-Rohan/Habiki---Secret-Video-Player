@@ -4,6 +4,7 @@ import { Player } from "./player.js";
 import { Dashboard } from "./dashboard.js";
 import { TeacherMode } from "./teacher.js";
 import { SettingsPanel } from "./settings.js";
+import { applyTheme } from "./themes.js";
 
 const state = {
   fullLibrary: { entries: [] },
@@ -43,6 +44,7 @@ const elements = {
   dashManage: document.querySelector("#dash-manage"),
   teacherOpen: document.querySelector("#teacher-open"),
   settingsOpen: document.querySelector("#settings-open"),
+  playerTeacher: document.querySelector("#player-teacher"),
 };
 
 const player = new Player({
@@ -74,9 +76,12 @@ const teacher = new TeacherMode({
   kicker: document.querySelector("#teacher-kicker"),
   title: document.querySelector("#teacher-title"),
   meta: document.querySelector("#teacher-meta"),
+  date: document.querySelector("#teacher-date"),
   body: document.querySelector("#teacher-body"),
 }, {
-  onActivate: () => {
+  onActivate: async () => {
+    await player.exitFullscreen();
+    elements.application.setAttribute("aria-hidden", "true");
     const episode = player.currentEpisode;
     if (!episode) return;
     teacher.setContent({
@@ -84,7 +89,13 @@ const teacher = new TeacherMode({
       meta: `Episode ${String(episode.number).padStart(2, "0")}${episode.anime_title ? ` · ${episode.anime_title}` : ""}`,
     });
   },
+  onDeactivate: () => {
+    elements.application.removeAttribute("aria-hidden");
+    elements.playerTeacher.focus();
+  },
 });
+
+elements.playerTeacher.addEventListener("click", () => teacher.toggle());
 
 const dashboard = new Dashboard({
   scanButton: document.querySelector("#scan-library"),
@@ -122,6 +133,7 @@ const settingsPanel = new SettingsPanel({
 }, {
   api,
   onSaved: applySettings,
+  onThemePreview: applyTheme,
   onScan: async () => {
     const finished = await dashboard.waitForScan();
     if (!finished) {
@@ -442,29 +454,37 @@ function resolveWelcomeVisibility() {
 }
 
 async function setupWelcome() {
-  try {
-    const libraryView = await api.library("", "all", "default");
-    const bannerEntry = (libraryView.entries || []).find((entry) => entry.banner);
+  const [libraryResult, bannerResult] = await Promise.allSettled([
+    api.library("", "all", "default"),
+    api.banners(),
+  ]);
+  if (libraryResult.status === "fulfilled") {
+    const bannerEntry = (libraryResult.value.entries || []).find((entry) => entry.banner);
     if (bannerEntry) {
       applyWelcomeBackdrop(api.banner(bannerEntry.id));
       return;
     }
-  } catch { /* fall through to application banners */ }
-  try {
-    const { banners } = await api.banners();
-    if (!banners?.length) return;
+  }
+  if (bannerResult.status === "fulfilled" && bannerResult.value.banners?.length) {
+    const banners = bannerResult.value.banners;
     const banner = banners[Math.floor(Math.random() * banners.length)].url;
     applyWelcomeBackdrop(banner);
-  } catch { /* decorative only; keep the base gradient */ }
+  }
 }
 
 function applyWelcomeBackdrop(imageUrl) {
   const backdrop = elements.welcomeBackdrop;
-  backdrop.style.backgroundImage =
-    `linear-gradient(to top, var(--color-bg) 6%, color-mix(in srgb, var(--color-bg) 52%, transparent) 34%, transparent 68%), url("${imageUrl}")`;
-  backdrop.style.backgroundSize = "cover, cover";
-  backdrop.style.backgroundPosition = "center, center";
-  requestAnimationFrame(() => backdrop.classList.add("has-banner"));
+  const image = new Image();
+  image.decoding = "async";
+  image.fetchPriority = "high";
+  image.onload = () => {
+    backdrop.style.backgroundImage =
+      `linear-gradient(to top, var(--color-bg) 6%, color-mix(in srgb, var(--color-bg) 52%, transparent) 34%, transparent 68%), url("${imageUrl}")`;
+    backdrop.style.backgroundSize = "cover, cover";
+    backdrop.style.backgroundPosition = "center, center";
+    requestAnimationFrame(() => backdrop.classList.add("has-banner"));
+  };
+  image.src = imageUrl;
 }
 
 async function injectVersion() {
@@ -482,6 +502,7 @@ function teacherKeyLabel(shortcut) {
 }
 
 function applySettings(values) {
+  applyTheme(values.theme || "dark");
   player.applyDefaults({
     volume: Number(values.default_volume ?? 100) / 100,
     speed: Number(values.default_speed ?? 1) || 1,

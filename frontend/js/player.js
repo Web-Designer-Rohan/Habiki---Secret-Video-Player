@@ -37,6 +37,7 @@ export class Player {
       this.updateProgress();
       this.refreshAudioTracks();
     });
+    this.video.addEventListener("loadstart", () => this.loading.removeAttribute("hidden"));
     this.video.addEventListener("waiting", () => this.loading.removeAttribute("hidden"));
     this.video.addEventListener("canplay", () => this.loading.setAttribute("hidden", ""));
     this.video.addEventListener("error", () => {
@@ -72,7 +73,8 @@ export class Player {
     this.fullscreenToggle.addEventListener("click", () => this.fullscreen());
     this.prevButton?.addEventListener("click", () => this.onNavigate("prev"));
     this.nextButton?.addEventListener("click", () => this.onNavigate("next"));
-    document.addEventListener("fullscreenchange", () => this.updateFullscreenButton());
+    document.addEventListener("fullscreenchange", () => this.handleFullscreenChange());
+    document.addEventListener("webkitfullscreenchange", () => this.handleFullscreenChange());
     this.video.addEventListener("dblclick", () => this.fullscreen());
     document.addEventListener("keydown", (event) => {
       if (event.target.matches("input, select, textarea")) return;
@@ -90,6 +92,7 @@ export class Player {
     this.resumeReady = false;
     this.error.setAttribute("hidden", "");
     this.empty.setAttribute("hidden", "");
+    this.loading.removeAttribute("hidden");
     this.subtitle.replaceChildren(new Option("Subtitles off", ""));
     this.audioTrack?.replaceChildren();
     if (this.audioTrack) this.audioTrack.hidden = true;
@@ -180,19 +183,40 @@ export class Player {
     if (this.nextButton) this.nextButton.disabled = !nextEnabled;
   }
 
+  fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  handleFullscreenChange() {
+    this.updateFullscreenButton();
+    if (!this.fullscreenElement()) {
+      try { globalThis.screen?.orientation?.unlock?.(); } catch { /* orientation may be unavailable */ }
+    }
+  }
+
   updateFullscreenButton() {
     if (!this.fullscreenToggle) return;
-    const active = Boolean(document.fullscreenElement);
-    this.fullscreenToggle.textContent = active ? "⛶" : "⛶";
+    const active = Boolean(this.fullscreenElement());
+    this.fullscreenToggle.textContent = "⛶";
     this.fullscreenToggle.setAttribute("aria-label", active ? "Exit fullscreen" : "Fullscreen");
   }
 
+  async exitFullscreen() {
+    if (!this.fullscreenElement()) return;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    await Promise.resolve(exit?.call(document)).catch(() => undefined);
+  }
+
   fullscreen() {
-    const target = document.querySelector("#player-shell");
-    if (!document.fullscreenElement) {
-      Promise.resolve(target.requestFullscreen?.()).catch(() => this.error.removeAttribute("hidden"));
-    } else {
-      Promise.resolve(document.exitFullscreen?.()).catch(() => this.error.removeAttribute("hidden"));
+    if (this.fullscreenElement()) {
+      this.exitFullscreen().catch(() => this.error.removeAttribute("hidden"));
+      return;
     }
+    const target = document.querySelector("#player-shell");
+    const request = target?.requestFullscreen || target?.webkitRequestFullscreen;
+    Promise.resolve(request?.call(target)).then(() => {
+      const orientation = globalThis.screen?.orientation;
+      return Promise.resolve(orientation?.lock?.("landscape")).catch(() => undefined);
+    }).catch(() => this.error.removeAttribute("hidden"));
   }
 }

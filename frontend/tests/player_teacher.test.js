@@ -48,6 +48,7 @@ class FakeElement {
   querySelectorAll() { return []; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
   removeAttribute(name) { delete this.attributes[name]; }
+  getAttribute(name) { return this.attributes[name]; }
   matches() { return false; }
   focus() { this.focused = true; }
   load() {}
@@ -103,6 +104,35 @@ test("player applies zero volume and safe defaults without audioTracks support",
   assert.equal(video.volume, 0);
   assert.equal(volume.value, "0");
   assert.equal(video.playbackRate, 1.25);
+});
+
+test("player starts loading immediately and supports prefixed fullscreen APIs", async () => {
+  const documentElement = installDocument();
+  const playerShell = documentElement.querySelector();
+  let requested = false;
+  playerShell.webkitRequestFullscreen = () => { requested = true; };
+  const video = new FakeElement();
+  const loading = new FakeElement();
+  const player = new Player({
+    video,
+    empty: new FakeElement(),
+    loading,
+    error: new FakeElement(),
+    playToggle: new FakeElement(),
+    timeline: new FakeElement(),
+    timeDisplay: new FakeElement(),
+    muteToggle: new FakeElement(),
+    volume: new FakeElement(),
+    subtitle: new FakeElement(),
+    audioTrack: new FakeElement(),
+    speed: new FakeElement(),
+    fullscreenToggle: new FakeElement(),
+  });
+  player.load({ url: "/video.mp4" }, { id: "episode" });
+  assert.equal(loading.hidden, false);
+  player.fullscreen();
+  assert.equal(requested, true);
+  await player.exitFullscreen();
 });
 
 test("player loads thumbnail and subtitle manifest and handles missing fullscreen API", () => {
